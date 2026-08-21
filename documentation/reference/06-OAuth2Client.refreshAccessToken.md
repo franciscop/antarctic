@@ -5,12 +5,11 @@ Refreshes an access token with a refresh token. The `scope` request parameter wi
 ### Definition
 
 ```ts
-//$ OAuth2Tokens=/reference/main/OAuth2Tokens
 async function refreshAccessToken(
 	tokenEndpoint: string,
 	refreshToken: string,
 	scopes: string[]
-): Promise<$$OAuth2Tokens>;
+): Promise<OAuth2Tokens>;
 ```
 
 #### Parameters

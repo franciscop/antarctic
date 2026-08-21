@@ -5,12 +5,11 @@ Validates an authorization code for an access token. Pass `codeVerifier` for PKC
 ### Definitions
 
 ```ts
-//$ OAuth2Tokens=/reference/main/OAuth2Tokens
 async function validateAuthorizationCode(
 	tokenEndpoint: string,
 	code: string,
 	codeVerifier: string | null
-): Promise<$$OAuth2Tokens>;
+): Promise<OAuth2Tokens>;
 ```
 
 #### Parameters

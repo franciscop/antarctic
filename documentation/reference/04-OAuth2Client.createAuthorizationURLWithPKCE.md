@@ -5,11 +5,10 @@ Creates an authorization URL for PKCE flow. The `scope` query parameter will not
 ### Definition
 
 ```ts
-//$ CodeChallengeMethod=/reference/main/CodeChallengeMethod
 function createAuthorizationURLWithPKCE(
 	authorizationEndpoint: string,
 	state: string,
-	codeChallengeMethod: $$CodeChallengeMethod,
+	codeChallengeMethod: CodeChallengeMethod,
 	codeVerifier: string,
 	scopes: string[]
 );
