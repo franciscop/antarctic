@@ -1,19 +1,55 @@
 import { createOAuth2Request, sendTokenRequest } from "../request.js";
+import {
+	consumeOAuthState,
+	fetchUserProfile,
+	generateOAuthState,
+	parseCallbackQuery,
+	profileId,
+	profileString,
+	requireAuthConfig,
+	resolveAuthConfig,
+	resolveScopes,
+	saveOAuthState
+} from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
+import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
 
 const authorizationEndpoint = "https://www.strava.com/oauth/authorize";
 const tokenEndpoint = "https://www.strava.com/api/v3/oauth/token";
+const userEndpoint = "https://www.strava.com/api/v3/athlete";
+
+const envPrefix = "STRAVA";
+const defaultScopes = ["read"];
+
+export interface StravaOptions extends ProviderOptions {}
 
 export class Strava {
 	private clientId: string;
 	private clientSecret: string;
 	private redirectURI: string;
+	private auth: AuthConfig | null = null;
 
-	constructor(clientId: string, clientSecret: string, redirectURI: string) {
-		this.clientId = clientId;
-		this.clientSecret = clientSecret;
-		this.redirectURI = redirectURI;
+	constructor(options: StravaOptions);
+	constructor(clientId: string, clientSecret: string, redirectURI: string);
+	constructor(
+		clientIdOrOptions: string | StravaOptions,
+		clientSecret?: string,
+		redirectURI?: string
+	) {
+		if (typeof clientIdOrOptions === "object") {
+			this.auth = resolveAuthConfig(envPrefix, clientIdOrOptions, {
+				clientSecret: true,
+				redirectURI: true
+			});
+			this.clientId = this.auth.clientId;
+			this.clientSecret = this.auth.clientSecret ?? "";
+			this.redirectURI = this.auth.redirectURI ?? "";
+		} else {
+			this.clientId = clientIdOrOptions;
+			this.clientSecret = clientSecret ?? "";
+			this.redirectURI = redirectURI ?? "";
+		}
 	}
 
 	public createAuthorizationURL(state: string, scopes: string[]): URL {
@@ -50,5 +86,30 @@ export class Strava {
 		const request = createOAuth2Request(tokenEndpoint, body);
 		const tokens = await sendTokenRequest(request);
 		return tokens;
+	}
+
+	public async getAuthorizationURL(scopes?: string[]): Promise<URL> {
+		const auth = requireAuthConfig(this.auth);
+		const state = generateOAuthState();
+		const url = this.createAuthorizationURL(state, resolveScopes(scopes, auth, defaultScopes));
+		await saveOAuthState(auth.store, state, {});
+		return url;
+	}
+
+	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+		const auth = requireAuthConfig(this.auth);
+		const { code, state } = parseCallbackQuery(query);
+		await consumeOAuthState(auth.store, state);
+		const tokens = await this.validateAuthorizationCode(code);
+		const profile = await fetchUserProfile(userEndpoint, tokens.accessToken());
+		const firstName = profileString(profile.firstname);
+		const lastName = profileString(profile.lastname);
+		const name = [firstName, lastName].filter((part) => part !== null).join(" ");
+		return {
+			id: profileId(profile.id),
+			name: name !== "" ? name : null,
+			email: null,
+			image: profileString(profile.profile)
+		};
 	}
 }

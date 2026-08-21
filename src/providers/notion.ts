@@ -1,14 +1,50 @@
 import { OAuth2Client } from "../client.js";
+import {
+	consumeOAuthState,
+	generateOAuthState,
+	OAuthProviderError,
+	parseCallbackQuery,
+	profileId,
+	profileString,
+	requireAuthConfig,
+	resolveAuthConfig,
+	saveOAuthState
+} from "../auth.js";
+
 import type { OAuth2Tokens } from "../oauth2.js";
+import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
 
 const authorizationEndpoint = "https://api.notion.com/v1/oauth/authorize";
 const tokenEndpoint = "https://api.notion.com/v1/oauth/token";
 
+const envPrefix = "NOTION";
+
+export interface NotionOptions extends ProviderOptions {}
+
 export class Notion {
 	private client: OAuth2Client;
+	private auth: AuthConfig | null = null;
 
-	constructor(clientId: string, clientSecret: string, redirectURI: string) {
-		this.client = new OAuth2Client(clientId, clientSecret, redirectURI);
+	constructor(options: NotionOptions);
+	constructor(clientId: string, clientSecret: string, redirectURI: string);
+	constructor(
+		clientIdOrOptions: string | NotionOptions,
+		clientSecret?: string,
+		redirectURI?: string
+	) {
+		if (typeof clientIdOrOptions === "object") {
+			this.auth = resolveAuthConfig(envPrefix, clientIdOrOptions, {
+				clientSecret: true,
+				redirectURI: true
+			});
+			this.client = new OAuth2Client(
+				this.auth.clientId,
+				this.auth.clientSecret,
+				this.auth.redirectURI
+			);
+		} else {
+			this.client = new OAuth2Client(clientIdOrOptions, clientSecret ?? null, redirectURI ?? null);
+		}
 	}
 
 	public createAuthorizationURL(state: string): URL {
@@ -20,5 +56,42 @@ export class Notion {
 	public async validateAuthorizationCode(code: string): Promise<OAuth2Tokens> {
 		const tokens = await this.client.validateAuthorizationCode(tokenEndpoint, code, null);
 		return tokens;
+	}
+
+	// Notion does not use scopes, so the argument is ignored.
+	public async getAuthorizationURL(_scopes?: string[]): Promise<URL> {
+		const auth = requireAuthConfig(this.auth);
+		const state = generateOAuthState();
+		const url = this.createAuthorizationURL(state);
+		await saveOAuthState(auth.store, state, {});
+		return url;
+	}
+
+	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+		const auth = requireAuthConfig(this.auth);
+		const { code, state } = parseCallbackQuery(query);
+		await consumeOAuthState(auth.store, state);
+		const tokens = await this.validateAuthorizationCode(code);
+		// Notion returns the authorizing user inside the token response.
+		const data = tokens.data as Record<string, unknown>;
+		const owner = data.owner;
+		if (typeof owner !== "object" || owner === null) {
+			throw new OAuthProviderError("Notion token response is missing the owner");
+		}
+		const user = (owner as Record<string, unknown>).user;
+		if (typeof user !== "object" || user === null) {
+			throw new OAuthProviderError("Notion token response is missing the user");
+		}
+		const profile = user as Record<string, unknown>;
+		let email: string | null = null;
+		if (typeof profile.person === "object" && profile.person !== null) {
+			email = profileString((profile.person as Record<string, unknown>).email);
+		}
+		return {
+			id: profileId(profile.id),
+			name: profileString(profile.name),
+			email,
+			image: profileString(profile.avatar_url)
+		};
 	}
 }

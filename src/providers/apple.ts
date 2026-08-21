@@ -1,11 +1,34 @@
 import * as jwt from "@oslojs/jwt";
 
 import { createOAuth2Request, sendTokenRequest } from "../request.js";
+import { decodeIdToken } from "../oidc.js";
+import {
+	consumeOAuthState,
+	generateOAuthState,
+	parseCallbackQuery,
+	profileId,
+	profileString,
+	requireAuthConfig,
+	requireProviderOption,
+	resolveAuthConfig,
+	resolveScopes,
+	saveOAuthState
+} from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
+import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
 
 const authorizationEndpoint = "https://appleid.apple.com/auth/authorize";
 const tokenEndpoint = "https://appleid.apple.com/auth/token";
+
+const envPrefix = "APPLE";
+const defaultScopes = ["email"];
+
+export interface AppleOptions extends ProviderOptions {
+	teamId?: string;
+	keyId?: string;
+	pkcs8PrivateKey: Uint8Array;
+}
 
 export class Apple {
 	private clientId: string;
@@ -13,19 +36,37 @@ export class Apple {
 	private keyId: string;
 	private pkcs8PrivateKey: Uint8Array;
 	private redirectURI: string;
+	private auth: AuthConfig | null = null;
 
+	constructor(options: AppleOptions);
 	constructor(
 		clientId: string,
 		teamId: string,
 		keyId: string,
 		pkcs8PrivateKey: Uint8Array,
 		redirectURI: string
+	);
+	constructor(
+		clientIdOrOptions: string | AppleOptions,
+		teamId?: string,
+		keyId?: string,
+		pkcs8PrivateKey?: Uint8Array,
+		redirectURI?: string
 	) {
-		this.clientId = clientId;
-		this.teamId = teamId;
-		this.keyId = keyId;
-		this.pkcs8PrivateKey = pkcs8PrivateKey;
-		this.redirectURI = redirectURI;
+		if (typeof clientIdOrOptions === "object") {
+			this.auth = resolveAuthConfig(envPrefix, clientIdOrOptions, { redirectURI: true });
+			this.clientId = this.auth.clientId;
+			this.teamId = requireProviderOption(clientIdOrOptions.teamId, envPrefix, "TEAM_ID", "teamId");
+			this.keyId = requireProviderOption(clientIdOrOptions.keyId, envPrefix, "KEY_ID", "keyId");
+			this.pkcs8PrivateKey = clientIdOrOptions.pkcs8PrivateKey;
+			this.redirectURI = this.auth.redirectURI ?? "";
+		} else {
+			this.clientId = clientIdOrOptions;
+			this.teamId = teamId ?? "";
+			this.keyId = keyId ?? "";
+			this.pkcs8PrivateKey = pkcs8PrivateKey ?? new Uint8Array();
+			this.redirectURI = redirectURI ?? "";
+		}
 	}
 
 	public createAuthorizationURL(state: string, scopes: string[]): URL {
@@ -53,10 +94,37 @@ export class Apple {
 		return tokens;
 	}
 
+	public async getAuthorizationURL(scopes?: string[]): Promise<URL> {
+		const auth = requireAuthConfig(this.auth);
+		const state = generateOAuthState();
+		const resolvedScopes = resolveScopes(scopes, auth, defaultScopes);
+		const url = this.createAuthorizationURL(state, resolvedScopes);
+		// Apple requires form_post whenever scopes are requested.
+		if (resolvedScopes.length > 0) {
+			url.searchParams.set("response_mode", "form_post");
+		}
+		await saveOAuthState(auth.store, state, {});
+		return url;
+	}
+
+	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+		const auth = requireAuthConfig(this.auth);
+		const { code, state } = parseCallbackQuery(query);
+		await consumeOAuthState(auth.store, state);
+		const tokens = await this.validateAuthorizationCode(code);
+		const claims = decodeIdToken(tokens.idToken()) as Record<string, unknown>;
+		return {
+			id: profileId(claims.sub),
+			name: null,
+			email: profileString(claims.email),
+			image: null
+		};
+	}
+
 	private async createClientSecret(): Promise<string> {
 		const privateKey = await crypto.subtle.importKey(
 			"pkcs8",
-			this.pkcs8PrivateKey,
+			this.pkcs8PrivateKey as Uint8Array<ArrayBuffer>,
 			{
 				name: "ECDSA",
 				namedCurve: "P-256"
@@ -84,7 +152,7 @@ export class Apple {
 					hash: "SHA-256"
 				},
 				privateKey,
-				jwt.createJWTSignatureMessage(headerJSON, payloadJSON)
+				jwt.createJWTSignatureMessage(headerJSON, payloadJSON) as Uint8Array<ArrayBuffer>
 			)
 		);
 		const token = jwt.encodeJWT(headerJSON, payloadJSON, signature);

@@ -1,8 +1,8 @@
 {
-	"name": "arctic",
+	"name": "antarctic",
 	"type": "module",
-	"version": "3.7.0",
-	"description": "OAuth 2.0 clients for popular providers",
+	"version": "1.0.0",
+	"description": "High-level OAuth 2.0 clients for popular providers, forked from Arctic",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"module": "dist/index.js",
@@ -15,11 +15,14 @@
 	"files": [
 		"/dist/"
 	],
-	"author": "pilcrowOnPaper",
+	"author": "Francisco Presencia",
+	"contributors": [
+		"pilcrowOnPaper (author of Arctic, which Antarctic is a fork of)"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/pilcrowonpaper/arctic.git"
+		"url": "https://github.com/franciscop/antarctic.git"
 	},
 	"devDependencies": {
 		"@types/node": "^20.8.6",

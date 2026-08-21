@@ -1,0 +1,20 @@
+{
+	"name": "Antarctic",
+	"title": "Antarctic • High-level OAuth 2.0 clients for popular providers",
+	"description": "OAuth 2.0 clients for 64 providers, with a high-level layer that handles state, PKCE, and normalized user profiles.",
+	"menu": {
+		"Providers": "/documentation/providers",
+		"Reference": "/documentation/reference",
+		"Github": "https://github.com/franciscop/antarctic"
+	},
+	"documentation": {
+		"index": "documentation/index.md",
+		"1. High level API": "documentation/high-level-api.md",
+		"2. OAuth2": "documentation/oauth2.md",
+		"3. OAuth2 with PKCE": "documentation/oauth2-pkce.md",
+		"4. Generic client": "documentation/generic-client.md",
+		"5. Providers": "documentation/providers",
+		"6. Reference": "documentation/reference",
+		"7. From Arctic": "documentation/migrating.md"
+	}
+}

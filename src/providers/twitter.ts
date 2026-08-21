@@ -1,16 +1,53 @@
 import { OAuth2Client, CodeChallengeMethod } from "../client.js";
+import {
+	consumeOAuthState,
+	fetchUserProfile,
+	generateOAuthCodeVerifier,
+	generateOAuthState,
+	InvalidOAuthCallbackError,
+	parseCallbackQuery,
+	profileId,
+	profileString,
+	requireAuthConfig,
+	resolveAuthConfig,
+	resolveScopes,
+	saveOAuthState
+} from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
+import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
 
 const authorizationEndpoint = "https://twitter.com/i/oauth2/authorize";
 const tokenEndpoint = "https://api.twitter.com/2/oauth2/token";
 const tokenRevocationEndpoint = "https://api.twitter.com/2/oauth2/revoke";
+const userEndpoint = "https://api.twitter.com/2/users/me";
+
+const envPrefix = "TWITTER";
+const defaultScopes = ["users.read", "tweet.read"];
+
+export interface TwitterOptions extends ProviderOptions {}
 
 export class Twitter {
 	private client: OAuth2Client;
+	private auth: AuthConfig | null = null;
 
-	constructor(clientId: string, clientSecret: string | null, redirectURI: string) {
-		this.client = new OAuth2Client(clientId, clientSecret, redirectURI);
+	constructor(options: TwitterOptions);
+	constructor(clientId: string, clientSecret: string | null, redirectURI: string);
+	constructor(
+		clientIdOrOptions: string | TwitterOptions,
+		clientSecret?: string | null,
+		redirectURI?: string
+	) {
+		if (typeof clientIdOrOptions === "object") {
+			this.auth = resolveAuthConfig(envPrefix, clientIdOrOptions, { redirectURI: true });
+			this.client = new OAuth2Client(
+				this.auth.clientId,
+				this.auth.clientSecret,
+				this.auth.redirectURI
+			);
+		} else {
+			this.client = new OAuth2Client(clientIdOrOptions, clientSecret ?? null, redirectURI ?? null);
+		}
 	}
 
 	public createAuthorizationURL(state: string, codeVerifier: string, scopes: string[]): URL {
@@ -39,5 +76,42 @@ export class Twitter {
 
 	public async revokeToken(token: string): Promise<void> {
 		await this.client.revokeToken(tokenRevocationEndpoint, token);
+	}
+
+	public async getAuthorizationURL(scopes?: string[]): Promise<URL> {
+		const auth = requireAuthConfig(this.auth);
+		const state = generateOAuthState();
+		const codeVerifier = generateOAuthCodeVerifier();
+		const url = this.createAuthorizationURL(
+			state,
+			codeVerifier,
+			resolveScopes(scopes, auth, defaultScopes)
+		);
+		await saveOAuthState(auth.store, state, { codeVerifier });
+		return url;
+	}
+
+	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+		const auth = requireAuthConfig(this.auth);
+		const { code, state } = parseCallbackQuery(query);
+		const stored = await consumeOAuthState(auth.store, state);
+		if (typeof stored.codeVerifier !== "string") {
+			throw new InvalidOAuthCallbackError("Missing PKCE code verifier for OAuth state");
+		}
+		const tokens = await this.validateAuthorizationCode(code, stored.codeVerifier);
+		const url = new URL(userEndpoint);
+		url.searchParams.set("user.fields", "profile_image_url");
+		const profile = await fetchUserProfile(url, tokens.accessToken());
+		let user: Record<string, unknown> = {};
+		if (typeof profile.data === "object" && profile.data !== null) {
+			user = profile.data as Record<string, unknown>;
+		}
+		// The Twitter API does not expose an email address.
+		return {
+			id: profileId(user.id),
+			name: profileString(user.name) ?? profileString(user.username),
+			email: null,
+			image: profileString(user.profile_image_url)
+		};
 	}
 }

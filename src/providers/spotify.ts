@@ -1,15 +1,52 @@
 import { CodeChallengeMethod, OAuth2Client } from "../client.js";
+import {
+	consumeOAuthState,
+	fetchUserProfile,
+	generateOAuthCodeVerifier,
+	generateOAuthState,
+	InvalidOAuthCallbackError,
+	parseCallbackQuery,
+	profileId,
+	profileString,
+	requireAuthConfig,
+	resolveAuthConfig,
+	resolveScopes,
+	saveOAuthState
+} from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
+import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
 
 const authorizationEndpoint = "https://accounts.spotify.com/authorize";
 const tokenEndpoint = "https://accounts.spotify.com/api/token";
+const userEndpoint = "https://api.spotify.com/v1/me";
+
+const envPrefix = "SPOTIFY";
+const defaultScopes = ["user-read-email", "user-read-private"];
+
+export interface SpotifyOptions extends ProviderOptions {}
 
 export class Spotify {
 	private client: OAuth2Client;
+	private auth: AuthConfig | null = null;
 
-	constructor(clientId: string, clientSecret: string | null, redirectURI: string) {
-		this.client = new OAuth2Client(clientId, clientSecret, redirectURI);
+	constructor(options: SpotifyOptions);
+	constructor(clientId: string, clientSecret: string | null, redirectURI: string);
+	constructor(
+		clientIdOrOptions: string | SpotifyOptions,
+		clientSecret?: string | null,
+		redirectURI?: string
+	) {
+		if (typeof clientIdOrOptions === "object") {
+			this.auth = resolveAuthConfig(envPrefix, clientIdOrOptions, { redirectURI: true });
+			this.client = new OAuth2Client(
+				this.auth.clientId,
+				this.auth.clientSecret,
+				this.auth.redirectURI
+			);
+		} else {
+			this.client = new OAuth2Client(clientIdOrOptions, clientSecret ?? null, redirectURI ?? "");
+		}
 	}
 
 	public createAuthorizationURL(state: string, codeVerifier: string | null, scopes: string[]): URL {
@@ -39,5 +76,40 @@ export class Spotify {
 	public async refreshAccessToken(refreshToken: string): Promise<OAuth2Tokens> {
 		const tokens = await this.client.refreshAccessToken(tokenEndpoint, refreshToken, []);
 		return tokens;
+	}
+
+	public async getAuthorizationURL(scopes?: string[]): Promise<URL> {
+		const auth = requireAuthConfig(this.auth);
+		const state = generateOAuthState();
+		const codeVerifier = generateOAuthCodeVerifier();
+		const url = this.createAuthorizationURL(
+			state,
+			codeVerifier,
+			resolveScopes(scopes, auth, defaultScopes)
+		);
+		await saveOAuthState(auth.store, state, { codeVerifier });
+		return url;
+	}
+
+	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+		const auth = requireAuthConfig(this.auth);
+		const { code, state } = parseCallbackQuery(query);
+		const stored = await consumeOAuthState(auth.store, state);
+		if (typeof stored.codeVerifier !== "string") {
+			throw new InvalidOAuthCallbackError("Missing PKCE code verifier for OAuth state");
+		}
+		const tokens = await this.validateAuthorizationCode(code, stored.codeVerifier);
+		const profile = await fetchUserProfile(userEndpoint, tokens.accessToken());
+		let image: string | null = null;
+		if (Array.isArray(profile.images) && profile.images.length > 0) {
+			const first = profile.images[0] as Record<string, unknown>;
+			image = profileString(first.url);
+		}
+		return {
+			id: profileId(profile.id),
+			name: profileString(profile.display_name),
+			email: profileString(profile.email),
+			image
+		};
 	}
 }

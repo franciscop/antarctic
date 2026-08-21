@@ -6,19 +6,53 @@ import {
 	UnexpectedResponseError
 } from "../request.js";
 import { OAuth2Tokens } from "../oauth2.js";
+import {
+	consumeOAuthState,
+	generateOAuthState,
+	parseCallbackQuery,
+	profileId,
+	requireAuthConfig,
+	resolveAuthConfig,
+	resolveScopes,
+	saveOAuthState
+} from "../auth.js";
+
+import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
 
 const authorizationEndpoint = "https://account.withings.com/oauth2_user/authorize2";
 const tokenEndpoint = "https://wbsapi.withings.net/v2/oauth2";
+
+const envPrefix = "WITHINGS";
+const defaultScopes = ["user.info"];
+
+export interface WithingsOptions extends ProviderOptions {}
 
 export class Withings {
 	private clientId: string;
 	private clientSecret: string;
 	private redirectURI: string;
+	private auth: AuthConfig | null = null;
 
-	constructor(clientId: string, clientSecret: string, redirectURI: string) {
-		this.clientId = clientId;
-		this.clientSecret = clientSecret;
-		this.redirectURI = redirectURI;
+	constructor(options: WithingsOptions);
+	constructor(clientId: string, clientSecret: string, redirectURI: string);
+	constructor(
+		clientIdOrOptions: string | WithingsOptions,
+		clientSecret?: string,
+		redirectURI?: string
+	) {
+		if (typeof clientIdOrOptions === "object") {
+			this.auth = resolveAuthConfig(envPrefix, clientIdOrOptions, {
+				clientSecret: true,
+				redirectURI: true
+			});
+			this.clientId = this.auth.clientId;
+			this.clientSecret = this.auth.clientSecret ?? "";
+			this.redirectURI = this.auth.redirectURI ?? "";
+		} else {
+			this.clientId = clientIdOrOptions;
+			this.clientSecret = clientSecret ?? "";
+			this.redirectURI = redirectURI ?? "";
+		}
 	}
 
 	public createAuthorizationURL(state: string, scopes: string[]): URL {
@@ -46,6 +80,29 @@ export class Withings {
 		const request = createOAuth2Request(tokenEndpoint, body);
 		const tokens = await sendTokenRequest(request);
 		return tokens;
+	}
+
+	public async getAuthorizationURL(scopes?: string[]): Promise<URL> {
+		const auth = requireAuthConfig(this.auth);
+		const state = generateOAuthState();
+		const url = this.createAuthorizationURL(state, resolveScopes(scopes, auth, defaultScopes));
+		await saveOAuthState(auth.store, state, {});
+		return url;
+	}
+
+	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+		const auth = requireAuthConfig(this.auth);
+		const { code, state } = parseCallbackQuery(query);
+		await consumeOAuthState(auth.store, state);
+		const tokens = await this.validateAuthorizationCode(code);
+		// Withings has no profile API; the token response only carries the user id.
+		const data = tokens.data as Record<string, unknown>;
+		return {
+			id: profileId(data.userid),
+			name: null,
+			email: null,
+			image: null
+		};
 	}
 }
 

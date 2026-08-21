@@ -7,19 +7,54 @@ import {
 	UnexpectedResponseError
 } from "../request.js";
 import { OAuth2Tokens } from "../oauth2.js";
+import {
+	consumeOAuthState,
+	fetchUserProfile,
+	generateOAuthState,
+	parseCallbackQuery,
+	profileId,
+	profileString,
+	requireAuthConfig,
+	resolveAuthConfig,
+	resolveScopes,
+	saveOAuthState
+} from "../auth.js";
+
+import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
 
 const authorizationEndpoint = "https://github.com/login/oauth/authorize";
 const tokenEndpoint = "https://github.com/login/oauth/access_token";
+const userEndpoint = "https://api.github.com/user";
+const userEmailsEndpoint = "https://api.github.com/user/emails";
+
+const envPrefix = "GITHUB";
+const defaultScopes = ["read:user", "user:email"];
+
+export interface GitHubOptions extends ProviderOptions {}
 
 export class GitHub {
 	private clientId: string;
 	private clientSecret: string;
 	private redirectURI: string | null;
+	private auth: AuthConfig | null = null;
 
-	constructor(clientId: string, clientSecret: string, redirectURI: string | null) {
-		this.clientId = clientId;
-		this.clientSecret = clientSecret;
-		this.redirectURI = redirectURI;
+	constructor(options: GitHubOptions);
+	constructor(clientId: string, clientSecret: string, redirectURI: string | null);
+	constructor(
+		clientIdOrOptions: string | GitHubOptions,
+		clientSecret?: string,
+		redirectURI?: string | null
+	) {
+		if (typeof clientIdOrOptions === "object") {
+			this.auth = resolveAuthConfig(envPrefix, clientIdOrOptions, { clientSecret: true });
+			this.clientId = this.auth.clientId;
+			this.clientSecret = this.auth.clientSecret ?? "";
+			this.redirectURI = this.auth.redirectURI;
+		} else {
+			this.clientId = clientIdOrOptions;
+			this.clientSecret = clientSecret ?? "";
+			this.redirectURI = redirectURI ?? null;
+		}
 	}
 
 	public createAuthorizationURL(state: string, scopes: string[]): URL {
@@ -60,6 +95,52 @@ export class GitHub {
 		const tokens = await sendTokenRequest(request);
 		return tokens;
 	}
+
+	public async getAuthorizationURL(scopes?: string[]): Promise<URL> {
+		const auth = requireAuthConfig(this.auth);
+		const state = generateOAuthState();
+		const url = this.createAuthorizationURL(state, resolveScopes(scopes, auth, defaultScopes));
+		await saveOAuthState(auth.store, state, {});
+		return url;
+	}
+
+	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+		const auth = requireAuthConfig(this.auth);
+		const { code, state } = parseCallbackQuery(query);
+		await consumeOAuthState(auth.store, state);
+		const tokens = await this.validateAuthorizationCode(code);
+		const accessToken = tokens.accessToken();
+		const profile = await fetchUserProfile(userEndpoint, accessToken);
+		let email = profileString(profile.email);
+		if (email === null) {
+			email = await fetchPrimaryEmail(accessToken);
+		}
+		return {
+			id: profileId(profile.id),
+			name: profileString(profile.name) ?? profileString(profile.login),
+			email,
+			image: profileString(profile.avatar_url)
+		};
+	}
+}
+
+// Private emails are not included in the profile and need the user:email scope.
+async function fetchPrimaryEmail(accessToken: string): Promise<string | null> {
+	let emails: unknown;
+	try {
+		emails = await fetchUserProfile(userEmailsEndpoint, accessToken);
+	} catch {
+		return null;
+	}
+	if (!Array.isArray(emails)) {
+		return null;
+	}
+	const entries = emails.filter(
+		(entry): entry is { email: string; primary?: boolean; verified?: boolean } =>
+			typeof entry === "object" && entry !== null && typeof entry.email === "string"
+	);
+	const primary = entries.find((entry) => entry.primary === true);
+	return primary?.email ?? entries[0]?.email ?? null;
 }
 
 async function sendTokenRequest(request: Request): Promise<OAuth2Tokens> {

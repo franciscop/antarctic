@@ -1,19 +1,55 @@
 import { createOAuth2Request, sendTokenRequest } from "../request.js";
+import {
+	consumeOAuthState,
+	fetchUserProfile,
+	generateOAuthState,
+	parseCallbackQuery,
+	profileId,
+	profileString,
+	requireAuthConfig,
+	resolveAuthConfig,
+	resolveScopes,
+	saveOAuthState
+} from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
+import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
 
 const authorizationEndpoint = "https://api.intra.42.fr/oauth/authorize";
 const tokenEndpoint = "https://api.intra.42.fr/oauth/token";
+const userEndpoint = "https://api.intra.42.fr/v2/me";
+
+const envPrefix = "FORTY_TWO";
+const defaultScopes = ["public"];
+
+export interface FortyTwoOptions extends ProviderOptions {}
 
 export class FortyTwo {
 	private clientId: string;
 	private clientSecret: string;
 	private redirectURI: string;
+	private auth: AuthConfig | null = null;
 
-	constructor(clientId: string, clientSecret: string, redirectURI: string) {
-		this.clientId = clientId;
-		this.clientSecret = clientSecret;
-		this.redirectURI = redirectURI;
+	constructor(options: FortyTwoOptions);
+	constructor(clientId: string, clientSecret: string, redirectURI: string);
+	constructor(
+		clientIdOrOptions: string | FortyTwoOptions,
+		clientSecret?: string,
+		redirectURI?: string
+	) {
+		if (typeof clientIdOrOptions === "object") {
+			this.auth = resolveAuthConfig(envPrefix, clientIdOrOptions, {
+				clientSecret: true,
+				redirectURI: true
+			});
+			this.clientId = this.auth.clientId;
+			this.clientSecret = this.auth.clientSecret ?? "";
+			this.redirectURI = this.auth.redirectURI ?? "";
+		} else {
+			this.clientId = clientIdOrOptions;
+			this.clientSecret = clientSecret ?? "";
+			this.redirectURI = redirectURI ?? "";
+		}
 	}
 
 	public createAuthorizationURL(state: string, scopes: string[]): URL {
@@ -38,5 +74,31 @@ export class FortyTwo {
 		const request = createOAuth2Request(tokenEndpoint, body);
 		const tokens = await sendTokenRequest(request);
 		return tokens;
+	}
+
+	public async getAuthorizationURL(scopes?: string[]): Promise<URL> {
+		const auth = requireAuthConfig(this.auth);
+		const state = generateOAuthState();
+		const url = this.createAuthorizationURL(state, resolveScopes(scopes, auth, defaultScopes));
+		await saveOAuthState(auth.store, state, {});
+		return url;
+	}
+
+	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+		const auth = requireAuthConfig(this.auth);
+		const { code, state } = parseCallbackQuery(query);
+		await consumeOAuthState(auth.store, state);
+		const tokens = await this.validateAuthorizationCode(code);
+		const profile = await fetchUserProfile(userEndpoint, tokens.accessToken());
+		let image: string | null = null;
+		if (typeof profile.image === "object" && profile.image !== null) {
+			image = profileString((profile.image as Record<string, unknown>).link);
+		}
+		return {
+			id: profileId(profile.id),
+			name: profileString(profile.displayname) ?? profileString(profile.login),
+			email: profileString(profile.email),
+			image
+		};
 	}
 }

@@ -1,19 +1,56 @@
 import { createOAuth2Request, sendTokenRequest } from "../request.js";
+import {
+	consumeOAuthState,
+	fetchUserProfile,
+	generateOAuthState,
+	parseCallbackQuery,
+	profileId,
+	profileString,
+	requireAuthConfig,
+	resolveAuthConfig,
+	resolveScopes,
+	saveOAuthState
+} from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
+import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
 
 const authorizationEndpoint = "https://dribbble.com/oauth/authorize";
 const tokenEndpoint = "https://dribbble.com/oauth/token";
+const userEndpoint = "https://api.dribbble.com/v2/user";
+
+const envPrefix = "DRIBBBLE";
+// Dribbble grants the "public" scope by default.
+const defaultScopes: string[] = [];
+
+export interface DribbbleOptions extends ProviderOptions {}
 
 export class Dribbble {
 	private clientId: string;
 	private clientSecret: string;
 	private redirectURI: string;
+	private auth: AuthConfig | null = null;
 
-	constructor(clientId: string, clientSecret: string, redirectURI: string) {
-		this.clientId = clientId;
-		this.clientSecret = clientSecret;
-		this.redirectURI = redirectURI;
+	constructor(options: DribbbleOptions);
+	constructor(clientId: string, clientSecret: string, redirectURI: string);
+	constructor(
+		clientIdOrOptions: string | DribbbleOptions,
+		clientSecret?: string,
+		redirectURI?: string
+	) {
+		if (typeof clientIdOrOptions === "object") {
+			this.auth = resolveAuthConfig(envPrefix, clientIdOrOptions, {
+				clientSecret: true,
+				redirectURI: true
+			});
+			this.clientId = this.auth.clientId;
+			this.clientSecret = this.auth.clientSecret ?? "";
+			this.redirectURI = this.auth.redirectURI ?? "";
+		} else {
+			this.clientId = clientIdOrOptions;
+			this.clientSecret = clientSecret ?? "";
+			this.redirectURI = redirectURI ?? "";
+		}
 	}
 
 	public createAuthorizationURL(state: string, scopes: string[]): URL {
@@ -38,5 +75,28 @@ export class Dribbble {
 		const request = createOAuth2Request(tokenEndpoint, body);
 		const tokens = await sendTokenRequest(request);
 		return tokens;
+	}
+
+	public async getAuthorizationURL(scopes?: string[]): Promise<URL> {
+		const auth = requireAuthConfig(this.auth);
+		const state = generateOAuthState();
+		const url = this.createAuthorizationURL(state, resolveScopes(scopes, auth, defaultScopes));
+		await saveOAuthState(auth.store, state, {});
+		return url;
+	}
+
+	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+		const auth = requireAuthConfig(this.auth);
+		const { code, state } = parseCallbackQuery(query);
+		await consumeOAuthState(auth.store, state);
+		const tokens = await this.validateAuthorizationCode(code);
+		const profile = await fetchUserProfile(userEndpoint, tokens.accessToken());
+		return {
+			id: profileId(profile.id),
+			name: profileString(profile.name) ?? profileString(profile.login),
+			// The v2 user endpoint does not expose an email address.
+			email: null,
+			image: profileString(profile.avatar_url)
+		};
 	}
 }

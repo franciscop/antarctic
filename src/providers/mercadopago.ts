@@ -1,21 +1,57 @@
 import { createS256CodeChallenge } from "../oauth2.js";
 import { createOAuth2Request, sendTokenRequest } from "../request.js";
+import {
+	consumeOAuthState,
+	fetchUserProfile,
+	generateOAuthCodeVerifier,
+	generateOAuthState,
+	InvalidOAuthCallbackError,
+	parseCallbackQuery,
+	profileId,
+	profileString,
+	requireAuthConfig,
+	resolveAuthConfig,
+	saveOAuthState
+} from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
+import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
 
 const authorizationEndpoint = "https://auth.mercadopago.com/authorization";
 const tokenEndpoint = "https://api.mercadopago.com/oauth/token";
+const userEndpoint = "https://api.mercadopago.com/users/me";
+
+const envPrefix = "MERCADO_PAGO";
+
+export interface MercadoPagoOptions extends ProviderOptions {}
 
 export class MercadoPago {
 	public clientId: string;
 
 	private clientSecret: string;
 	private redirectURI: string;
+	private auth: AuthConfig | null = null;
 
-	constructor(clientId: string, clientSecret: string, redirectURI: string) {
-		this.clientId = clientId;
-		this.clientSecret = clientSecret;
-		this.redirectURI = redirectURI;
+	constructor(options: MercadoPagoOptions);
+	constructor(clientId: string, clientSecret: string, redirectURI: string);
+	constructor(
+		clientIdOrOptions: string | MercadoPagoOptions,
+		clientSecret?: string,
+		redirectURI?: string
+	) {
+		if (typeof clientIdOrOptions === "object") {
+			this.auth = resolveAuthConfig(envPrefix, clientIdOrOptions, {
+				clientSecret: true,
+				redirectURI: true
+			});
+			this.clientId = this.auth.clientId;
+			this.clientSecret = this.auth.clientSecret ?? "";
+			this.redirectURI = this.auth.redirectURI ?? "";
+		} else {
+			this.clientId = clientIdOrOptions;
+			this.clientSecret = clientSecret ?? "";
+			this.redirectURI = redirectURI ?? "";
+		}
 	}
 
 	// `scopes` not required since they are defined in the application settings
@@ -56,5 +92,39 @@ export class MercadoPago {
 		const request = createOAuth2Request(tokenEndpoint, body);
 		const tokens = await sendTokenRequest(request);
 		return tokens;
+	}
+
+	// Scopes are defined in the application settings, so the argument is ignored.
+	public async getAuthorizationURL(_scopes?: string[]): Promise<URL> {
+		const auth = requireAuthConfig(this.auth);
+		const state = generateOAuthState();
+		const codeVerifier = generateOAuthCodeVerifier();
+		const url = this.createAuthorizationURL(state, codeVerifier);
+		await saveOAuthState(auth.store, state, { codeVerifier });
+		return url;
+	}
+
+	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+		const auth = requireAuthConfig(this.auth);
+		const { code, state } = parseCallbackQuery(query);
+		const stored = await consumeOAuthState(auth.store, state);
+		if (typeof stored.codeVerifier !== "string") {
+			throw new InvalidOAuthCallbackError("Missing PKCE code verifier for OAuth state");
+		}
+		const tokens = await this.validateAuthorizationCode(code, stored.codeVerifier);
+		const profile = await fetchUserProfile(userEndpoint, tokens.accessToken());
+		const firstName = profileString(profile.first_name);
+		const lastName = profileString(profile.last_name);
+		const fullName = [firstName, lastName].filter((part) => part !== null).join(" ");
+		let image: string | null = null;
+		if (typeof profile.thumbnail === "object" && profile.thumbnail !== null) {
+			image = profileString((profile.thumbnail as Record<string, unknown>).picture_url);
+		}
+		return {
+			id: profileId(profile.id),
+			name: fullName !== "" ? fullName : profileString(profile.nickname),
+			email: profileString(profile.email),
+			image
+		};
 	}
 }

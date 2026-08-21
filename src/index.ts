@@ -72,3 +72,11 @@ export {
 	UnexpectedResponseError
 } from "./request.js";
 export { decodeIdToken } from "./oidc.js";
+
+export {
+	InvalidOAuthCallbackError,
+	InvalidOAuthStateError,
+	OAuthConfigurationError,
+	OAuthProviderError
+} from "./auth.js";
+export type { OAuthCallbackQuery, OAuthStateStore, OAuthUser, ProviderOptions } from "./auth.js";

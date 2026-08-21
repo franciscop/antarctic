@@ -5,8 +5,34 @@ import {
 	joinURIAndPath,
 	sendTokenRequest
 } from "../request.js";
+import { decodeIdToken } from "../oidc.js";
+import {
+	consumeOAuthState,
+	fetchUserProfile,
+	generateOAuthCodeVerifier,
+	generateOAuthState,
+	InvalidOAuthCallbackError,
+	parseCallbackQuery,
+	profileId,
+	profileString,
+	requireAuthConfig,
+	requireProviderOption,
+	resolveAuthConfig,
+	resolveScopes,
+	saveOAuthState
+} from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
+import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
+
+const userinfoEndpoint = "https://graph.microsoft.com/oidc/userinfo";
+
+const envPrefix = "MICROSOFT_ENTRA_ID";
+const defaultScopes = ["openid", "profile", "email"];
+
+export interface MicrosoftEntraIdOptions extends ProviderOptions {
+	tenant?: string;
+}
 
 export class MicrosoftEntraId {
 	private authorizationEndpoint: string;
@@ -14,8 +40,29 @@ export class MicrosoftEntraId {
 	private clientId: string;
 	private clientSecret: string | null;
 	private redirectURI: string;
+	private auth: AuthConfig | null = null;
 
-	constructor(tenant: string, clientId: string, clientSecret: string | null, redirectURI: string) {
+	constructor(options: MicrosoftEntraIdOptions);
+	constructor(tenant: string, clientId: string, clientSecret: string | null, redirectURI: string);
+	constructor(
+		tenantOrOptions: string | MicrosoftEntraIdOptions,
+		clientId?: string,
+		clientSecret?: string | null,
+		redirectURI?: string
+	) {
+		let tenant: string;
+		if (typeof tenantOrOptions === "object") {
+			this.auth = resolveAuthConfig(envPrefix, tenantOrOptions, { redirectURI: true });
+			tenant = requireProviderOption(tenantOrOptions.tenant, envPrefix, "TENANT", "tenant");
+			this.clientId = this.auth.clientId;
+			this.clientSecret = this.auth.clientSecret;
+			this.redirectURI = this.auth.redirectURI ?? "";
+		} else {
+			tenant = tenantOrOptions;
+			this.clientId = clientId ?? "";
+			this.clientSecret = clientSecret ?? null;
+			this.redirectURI = redirectURI ?? "";
+		}
 		this.authorizationEndpoint = joinURIAndPath(
 			"https://login.microsoftonline.com",
 			tenant,
@@ -26,9 +73,6 @@ export class MicrosoftEntraId {
 			tenant,
 			"/oauth2/v2.0/token"
 		);
-		this.clientId = clientId;
-		this.clientSecret = clientSecret;
-		this.redirectURI = redirectURI;
 	}
 
 	public createAuthorizationURL(state: string, codeVerifier: string, scopes: string[]): URL {
@@ -90,5 +134,40 @@ export class MicrosoftEntraId {
 		}
 		const tokens = await sendTokenRequest(request);
 		return tokens;
+	}
+
+	public async getAuthorizationURL(scopes?: string[]): Promise<URL> {
+		const auth = requireAuthConfig(this.auth);
+		const state = generateOAuthState();
+		const codeVerifier = generateOAuthCodeVerifier();
+		const url = this.createAuthorizationURL(
+			state,
+			codeVerifier,
+			resolveScopes(scopes, auth, defaultScopes)
+		);
+		await saveOAuthState(auth.store, state, { codeVerifier });
+		return url;
+	}
+
+	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+		const auth = requireAuthConfig(this.auth);
+		const { code, state } = parseCallbackQuery(query);
+		const stored = await consumeOAuthState(auth.store, state);
+		if (typeof stored.codeVerifier !== "string") {
+			throw new InvalidOAuthCallbackError("Missing PKCE code verifier for OAuth state");
+		}
+		const tokens = await this.validateAuthorizationCode(code, stored.codeVerifier);
+		let claims: Record<string, unknown>;
+		if ("id_token" in (tokens.data as object)) {
+			claims = decodeIdToken(tokens.idToken()) as Record<string, unknown>;
+		} else {
+			claims = await fetchUserProfile(userinfoEndpoint, tokens.accessToken());
+		}
+		return {
+			id: profileId(claims.sub),
+			name: profileString(claims.name),
+			email: profileString(claims.email) ?? profileString(claims.preferred_username),
+			image: profileString(claims.picture)
+		};
 	}
 }
