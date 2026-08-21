@@ -17,19 +17,20 @@ const apple = new arctic.Apple(clientId, teamId, keyId, pkcs8PrivateKey, redirec
 Here is an example to extract the PKCS#8 key from the PEM certificate.
 
 ```ts
-import * as encoding from "@oslojs/encoding";
-
 const certificate = `-----BEGIN PRIVATE KEY-----
 TmV2ZXIgZ29ubmEgZ2l2ZSB5b3UgdXANCk5ldmVyIGdvbm5hIGxldCB5b3UgZG93bg0KTmV2ZXIgZ29ubmEgcnVuIGFyb3VuZCBhbmQgZGVzZXJ0IHlvdQ0KTmV2ZXIgZ29ubmEgbWFrZSB5b3UgY3J5DQpOZXZlciBnb25uYSBzYXkgZ29vZGJ5ZQ0KTmV2ZXIgZ29ubmEgdGVsbCBhIGxpZSBhbmQgaHVydCB5b3U
 -----END PRIVATE KEY-----`;
-const privateKey = encoding.decodeBase64IgnorePadding(
-	certificate
-		.replace("-----BEGIN PRIVATE KEY-----", "")
-		.replace("-----END PRIVATE KEY-----", "")
-		.replaceAll("\r", "")
-		.replaceAll("\n", "")
-		.trim()
-);
+const base64 = certificate
+	.replace("-----BEGIN PRIVATE KEY-----", "")
+	.replace("-----END PRIVATE KEY-----", "")
+	.replaceAll("\r", "")
+	.replaceAll("\n", "")
+	.trim();
+const binary = atob(base64);
+const privateKey = new Uint8Array(binary.length);
+for (let i = 0; i < binary.length; i++) {
+	privateKey[i] = binary.charCodeAt(i);
+}
 ```
 
 ### Create authorization URL

@@ -1,4 +1,4 @@
-import * as jwt from "@oslojs/jwt";
+import { createJWTSignatureMessage, encodeJWT } from "../jwt.js";
 
 import { createOAuth2Request, sendTokenRequest } from "../request.js";
 import { decodeIdToken } from "../oidc.js";
@@ -152,10 +152,10 @@ export class Apple {
 					hash: "SHA-256"
 				},
 				privateKey,
-				jwt.createJWTSignatureMessage(headerJSON, payloadJSON) as Uint8Array<ArrayBuffer>
+				createJWTSignatureMessage(headerJSON, payloadJSON) as Uint8Array<ArrayBuffer>
 			)
 		);
-		const token = jwt.encodeJWT(headerJSON, payloadJSON, signature);
+		const token = encodeJWT(headerJSON, payloadJSON, signature);
 		return token;
 	}
 }

@@ -1,4 +1,4 @@
-import * as encoding from "@oslojs/encoding";
+import { encodeBase64urlNoPadding } from "./encoding.js";
 import * as sha2 from "@oslojs/crypto/sha2";
 
 export class OAuth2Tokens {
@@ -65,17 +65,17 @@ export class OAuth2Tokens {
 
 export function createS256CodeChallenge(codeVerifier: string): string {
 	const codeChallengeBytes = sha2.sha256(new TextEncoder().encode(codeVerifier));
-	return encoding.encodeBase64urlNoPadding(codeChallengeBytes);
+	return encodeBase64urlNoPadding(codeChallengeBytes);
 }
 
 export function generateCodeVerifier(): string {
 	const randomValues = new Uint8Array(32);
 	crypto.getRandomValues(randomValues);
-	return encoding.encodeBase64urlNoPadding(randomValues);
+	return encodeBase64urlNoPadding(randomValues);
 }
 
 export function generateState(): string {
 	const randomValues = new Uint8Array(32);
 	crypto.getRandomValues(randomValues);
-	return encoding.encodeBase64urlNoPadding(randomValues);
+	return encodeBase64urlNoPadding(randomValues);
 }
