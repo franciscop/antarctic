@@ -1,6 +1,6 @@
 {
 	"name": "antarctic",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"description": "High-level OAuth 2.0 clients for popular providers, forked from Arctic",
 	"type": "module",
 	"main": "dist/index.js",
