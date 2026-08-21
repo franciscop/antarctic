@@ -1,6 +1,6 @@
 # From Arctic
 
-Antarctic 1.0 forks Arctic 3.7. The low level API is identical, so moving from Arctic v3 means changing the import and nothing else:
+Antarctic forks Arctic 3.7. The low level API is identical, so moving from Arctic v3 means changing the import and nothing else:
 
 ```ts
 import * as arctic from "antarctic";
@@ -8,7 +8,7 @@ import * as arctic from "antarctic";
 
 The package name on npm is `antarctic`. Everything documented under [reference](/documentation/reference) behaves exactly as it did, and the [high level API](/documentation/high-level-api) is added on top.
 
-If you are on an older Arctic, upgrade through the sections below first. They are the upstream migration notes, kept here because the same changes apply on the way to Antarctic 1.0.
+If you are on an older Arctic, upgrade through the sections below first. They are the upstream migration notes, kept here because the same changes apply on the way to Antarctic.
 
 ## Arctic v2 to v3
 

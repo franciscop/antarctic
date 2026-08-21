@@ -1,6 +1,6 @@
 {
 	"name": "antarctic",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "High-level OAuth 2.0 clients for popular providers, forked from Arctic",
 	"type": "module",
 	"main": "dist/index.js",
@@ -22,7 +22,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/franciscop/antarctic.git"
+		"url": "git+https://github.com/franciscop/antarctic.git"
 	},
 	"devDependencies": {
 		"@types/node": "^20.8.6",
