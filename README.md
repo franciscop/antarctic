@@ -49,7 +49,7 @@ GOOGLE_CLIENT_ID
 await github.getAuthorizationURL(["repo"]); // overrides the constructor and the environment
 ```
 
-The environment is read when the provider is constructed, so load your `.env` file first. See the [high level API guide](https://documentation.page/github/franciscop/antarctic/documentation/high-level-api) for the details.
+The environment is read when the provider is constructed, so load your `.env` file first. See the [documentation](https://documentation.page/github/franciscop/antarctic/) for the details.
 
 Errors thrown by the high-level layer: `InvalidOAuthStateError`, `InvalidOAuthCallbackError`, `OAuthConfigurationError`, and `OAuthProviderError`.
 
