@@ -20,7 +20,7 @@ import * as arctic from "antarctic";
 const state = arctic.generateState();
 const codeVerifier = arctic.generateCodeVerifier();
 const scopes = ["challenge:read", "challenge:write"];
-const url = lichess.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await lichess.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ### Validate authorization code
@@ -68,7 +68,7 @@ Add the `email:read` scope and use the [/api/account/email](https://lichess.org/
 
 ```ts
 const scopes = ["email:read"];
-const url = lichess.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await lichess.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ```ts

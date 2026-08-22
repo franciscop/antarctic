@@ -24,7 +24,7 @@ import * as arctic from "antarctic";
 const state = arctic.generateState();
 const codeVerifier = arctic.generateCodeVerifier();
 const scopes = ["openid", "profile"];
-const url = keycloak.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await keycloak.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ### Validate authorization code
@@ -69,7 +69,7 @@ Use OpenID Connect with the `openid` scope to get the user's profile with an ID 
 
 ```ts
 const scopes = ["openid"];
-const url = keycloak.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await keycloak.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ```ts

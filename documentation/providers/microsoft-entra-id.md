@@ -23,7 +23,7 @@ import * as arctic from "antarctic";
 const state = arctic.generateState();
 const codeVerifier = arctic.generateCodeVerifier();
 const scopes = ["openid", "profile"];
-const url = entraId.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await entraId.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ### Validate authorization code
@@ -82,7 +82,7 @@ Use OpenID Connect with the `openid` scope to get the user's profile with an ID 
 
 ```ts
 const scopes = ["openid"];
-const url = entraId.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await entraId.createAuthorizationURL(state, codeVerifier, scopes);
 // The nonce should be unique to each request similar to state.
 // However, nonce can just be "_" here since it isn't useful for server-based OAuth.
 url.searchParams.set("nonce", nonce);
@@ -111,5 +111,5 @@ Make sure to add the `profile` scope to get the user profile and the `email` sco
 
 ```ts
 const scopes = ["openid", "profile", "email"];
-const url = entraId.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await entraId.createAuthorizationURL(state, codeVerifier, scopes);
 ```

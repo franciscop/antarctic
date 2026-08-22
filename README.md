@@ -57,7 +57,7 @@ Sessions, cookies, and your user database remain your responsibility: take the r
 
 ## Low-level API
 
-The original Arctic API is unchanged and remains available on the same objects, including the positional constructors:
+Arctic's low level API remains available on the same objects, including the positional constructors. It is unchanged except that PKCE providers build the URL asynchronously, so `createAuthorizationURL()` returns a promise for them:
 
 ```ts
 import * as arctic from "antarctic";

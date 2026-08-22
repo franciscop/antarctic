@@ -49,10 +49,14 @@ export class Spotify {
 		}
 	}
 
-	public createAuthorizationURL(state: string, codeVerifier: string | null, scopes: string[]): URL {
+	public async createAuthorizationURL(
+		state: string,
+		codeVerifier: string | null,
+		scopes: string[]
+	): Promise<URL> {
 		let url: URL;
 		if (codeVerifier !== null) {
-			url = this.client.createAuthorizationURLWithPKCE(
+			url = await this.client.createAuthorizationURLWithPKCE(
 				authorizationEndpoint,
 				state,
 				CodeChallengeMethod.S256,
@@ -82,7 +86,7 @@ export class Spotify {
 		const auth = requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const codeVerifier = generateOAuthCodeVerifier();
-		const url = this.createAuthorizationURL(
+		const url = await this.createAuthorizationURL(
 			state,
 			codeVerifier,
 			resolveScopes(scopes, auth, defaultScopes)

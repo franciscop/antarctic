@@ -45,7 +45,7 @@ vitest.test("every provider exposes the high-level API", () => {
 	}
 });
 
-vitest.test("providers preserve the low-level API", () => {
+vitest.test("providers preserve the low-level API", async () => {
 	const github = new arctic.GitHub("id", "secret", null);
 	vitest.expect(typeof github.createAuthorizationURL).toBe("function");
 	vitest.expect(typeof github.validateAuthorizationCode).toBe("function");
@@ -57,7 +57,8 @@ vitest.test("providers preserve the low-level API", () => {
 
 	const google = new arctic.Google("id", "secret", "https://example.com/callback");
 	vitest.expect(typeof google.revokeToken).toBe("function");
-	const googleURL = google.createAuthorizationURL("state", "verifier", ["openid"]);
+	// PKCE providers build the URL asynchronously, since SHA-256 is async in the platform.
+	const googleURL = await google.createAuthorizationURL("state", "verifier", ["openid"]);
 	vitest.expect(googleURL.searchParams.get("code_challenge_method")).toBe("S256");
 });
 

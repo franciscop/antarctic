@@ -54,7 +54,11 @@ export class Polar {
 		}
 	}
 
-	public createAuthorizationURL(state: string, codeVerifier: string, scopes: string[]): URL {
+	public async createAuthorizationURL(
+		state: string,
+		codeVerifier: string,
+		scopes: string[]
+	): Promise<URL> {
 		const url = new URL(authorizationEndpoint);
 		url.searchParams.set("client_id", this.clientId);
 		url.searchParams.set("response_type", "code");
@@ -63,7 +67,7 @@ export class Polar {
 		if (scopes.length > 0) {
 			url.searchParams.set("scope", scopes.join(" "));
 		}
-		const codeChallenge = createS256CodeChallenge(codeVerifier);
+		const codeChallenge = await createS256CodeChallenge(codeVerifier);
 		url.searchParams.set("code_challenge", codeChallenge);
 		url.searchParams.set("code_challenge_method", "S256");
 		return url;
@@ -111,7 +115,7 @@ export class Polar {
 		const auth = requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const codeVerifier = generateOAuthCodeVerifier();
-		const url = this.createAuthorizationURL(
+		const url = await this.createAuthorizationURL(
 			state,
 			codeVerifier,
 			resolveScopes(scopes, auth, defaultScopes)

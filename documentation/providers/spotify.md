@@ -24,7 +24,7 @@ import * as arctic from "antarctic";
 
 const state = arctic.generateState();
 const scopes = ["user-read-email", "user-read-private"];
-const url = spotify.createAuthorizationURL(state, null, scopes);
+const url = await spotify.createAuthorizationURL(state, null, scopes);
 ```
 
 For public clients, pass the state, PKCE code verifier, and scopes.
@@ -35,7 +35,7 @@ import * as arctic from "antarctic";
 const state = arctic.generateState();
 const codeVerifier = arctic.generateCodeVerifier();
 const scopes = ["user-read-email", "user-read-private"];
-const url = spotify.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await spotify.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ### Validate authorization code

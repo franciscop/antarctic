@@ -1,5 +1,4 @@
 import { encodeBase64urlNoPadding } from "./encoding.js";
-import * as sha2 from "@oslojs/crypto/sha2";
 
 export class OAuth2Tokens {
 	public data: object;
@@ -63,9 +62,10 @@ export class OAuth2Tokens {
 	}
 }
 
-export function createS256CodeChallenge(codeVerifier: string): string {
-	const codeChallengeBytes = sha2.sha256(new TextEncoder().encode(codeVerifier));
-	return encodeBase64urlNoPadding(codeChallengeBytes);
+export async function createS256CodeChallenge(codeVerifier: string): Promise<string> {
+	const data = new TextEncoder().encode(codeVerifier);
+	const digest = await crypto.subtle.digest("SHA-256", data);
+	return encodeBase64urlNoPadding(new Uint8Array(digest));
 }
 
 export function generateCodeVerifier(): string {

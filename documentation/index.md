@@ -31,7 +31,7 @@ Credentials come from the environment when you do not pass them, so the example 
 
 ## Lower level
 
-The original Arctic API is unchanged and available on the same objects, for when you want to drive the flow yourself:
+Arctic's low level API is available on the same objects, for when you want to drive the flow yourself. It is unchanged except that PKCE providers build the URL asynchronously, so `createAuthorizationURL()` returns a promise for them:
 
 ```ts
 import * as arctic from "antarctic";

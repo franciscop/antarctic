@@ -21,7 +21,7 @@ const workos = new arctic.WorkOS(clientId, null, redirectURI);
 import * as arctic from "antarctic";
 
 const state = arctic.generateState();
-const url = workos.createAuthorizationURL(state);
+const url = await workos.createAuthorizationURL(state);
 ```
 
 ### Validate authorization code

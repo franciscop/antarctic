@@ -23,7 +23,7 @@ import * as arctic from "antarctic";
 const state = arctic.generateState();
 const codeVerifier = arctic.generateCodeVerifier();
 const scopes = ["read", "write"];
-const url = mastodon.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await mastodon.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ### Validate authorization code

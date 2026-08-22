@@ -25,7 +25,7 @@ import * as arctic from "antarctic";
 const state = arctic.generateState();
 const codeVerifier = arctic.generateCodeVerifier();
 const scopes = ["openid", "profile"];
-const url = okta.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await okta.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ### Validate authorization code

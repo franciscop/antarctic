@@ -20,7 +20,7 @@ import * as arctic from "antarctic";
 const state = arctic.generateState();
 const codeVerifier = arctic.generateCodeVerifier();
 const scopes = ["openid", "profile"];
-const url = polar.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await polar.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ### Validate authorization code
@@ -55,7 +55,7 @@ Use OpenID Connect with the `openid` scope to get the user's profile with an ID 
 
 ```ts
 const scopes = ["openid"];
-const url = polar.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await polar.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ```ts
@@ -81,7 +81,7 @@ Make sure to add the `profile` scope to get the user profile and the `email` sco
 
 ```ts
 const scopes = ["openid", "profile", "email"];
-const url = polar.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await polar.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ### Refresh tokens

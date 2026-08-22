@@ -20,7 +20,7 @@ import * as arctic from "antarctic";
 const state = arctic.generateState();
 const codeVerifier = arctic.generateCodeVerifier();
 const scopes = ["user:read"];
-const url = kick.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await kick.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ### Validate authorization code
@@ -78,7 +78,7 @@ Add the `user:read` scope when creating the authorization URL.
 
 ```ts
 const scopes = ["user:read"];
-const url = kick.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await kick.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 Then make a request to the Kick REST API with the access token.

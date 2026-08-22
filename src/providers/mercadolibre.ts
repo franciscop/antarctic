@@ -55,13 +55,13 @@ export class MercadoLibre {
 	}
 
 	// `scopes` not required since they are defined in the application settings
-	public createAuthorizationURL(state: string, codeVerifier: string): URL {
+	public async createAuthorizationURL(state: string, codeVerifier: string): Promise<URL> {
 		const url = new URL(authorizationEndpoint);
 		url.searchParams.set("response_type", "code");
 		url.searchParams.set("client_id", this.clientId);
 		url.searchParams.set("redirect_uri", this.redirectURI);
 		url.searchParams.set("state", state);
-		const codeChallenge = createS256CodeChallenge(codeVerifier);
+		const codeChallenge = await createS256CodeChallenge(codeVerifier);
 		url.searchParams.set("code_challenge_method", "S256");
 		url.searchParams.set("code_challenge", codeChallenge);
 		return url;
@@ -99,7 +99,7 @@ export class MercadoLibre {
 		const auth = requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const codeVerifier = generateOAuthCodeVerifier();
-		const url = this.createAuthorizationURL(state, codeVerifier);
+		const url = await this.createAuthorizationURL(state, codeVerifier);
 		await saveOAuthState(auth.store, state, { codeVerifier });
 		return url;
 	}

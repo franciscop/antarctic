@@ -22,7 +22,7 @@ import * as arctic from "antarctic";
 
 const state = arctic.generateState();
 const scopes = ["account_info.read", "files.content.read"];
-const url = twitter.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await twitter.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ### Validate authorization code
@@ -57,7 +57,7 @@ Add the `users.read` and `tweet.read` scopes and use the [`/users/me` endpoint](
 
 ```ts
 const scopes = ["users.read", "tweet.read"];
-const url = twitter.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await twitter.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ```ts
@@ -75,7 +75,7 @@ Add the `offline.access` scope to get refresh tokens.
 
 ```ts
 const scopes = ["offline.access"];
-const url = twitter.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await twitter.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ```ts

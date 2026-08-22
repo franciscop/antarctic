@@ -53,8 +53,12 @@ export class Zoom {
 		}
 	}
 
-	public createAuthorizationURL(state: string, codeVerifier: string, scopes: string[]): URL {
-		const url = this.client.createAuthorizationURLWithPKCE(
+	public async createAuthorizationURL(
+		state: string,
+		codeVerifier: string,
+		scopes: string[]
+	): Promise<URL> {
+		const url = await this.client.createAuthorizationURLWithPKCE(
 			authorizationEndpoint,
 			state,
 			CodeChallengeMethod.S256,
@@ -85,7 +89,7 @@ export class Zoom {
 		const auth = requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const codeVerifier = generateOAuthCodeVerifier();
-		const url = this.createAuthorizationURL(
+		const url = await this.createAuthorizationURL(
 			state,
 			codeVerifier,
 			resolveScopes(scopes, auth, defaultScopes)

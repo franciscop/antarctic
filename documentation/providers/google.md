@@ -20,7 +20,7 @@ import * as arctic from "antarctic";
 const state = arctic.generateState();
 const codeVerifier = arctic.generateCodeVerifier();
 const scopes = ["openid", "profile"];
-const url = google.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await google.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ### Validate authorization code
@@ -69,7 +69,7 @@ Also see [ID token claims](https://developers.google.com/identity/openid-connect
 
 ```ts
 const scopes = ["openid"];
-const url = google.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await google.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ```ts
@@ -95,7 +95,7 @@ Make sure to add the `profile` scope to get the user profile and the `email` sco
 
 ```ts
 const scopes = ["openid", "profile", "email"];
-const url = google.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await google.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ### Refresh tokens
@@ -103,7 +103,7 @@ const url = google.createAuthorizationURL(state, codeVerifier, scopes);
 Set the `access_type` parameter to `offline` to get refresh tokens. You will only get the refresh token on the user's first authentication.
 
 ```ts
-const url = google.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await google.createAuthorizationURL(state, codeVerifier, scopes);
 url.searchParams.set("access_type", "offline");
 ```
 

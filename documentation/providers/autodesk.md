@@ -23,7 +23,7 @@ import * as arctic from "antarctic";
 const state = arctic.generateState();
 const codeVerifier = arctic.generateCodeVerifier();
 const scopes = ["openid", "user:read", "data:read"];
-const url = autodesk.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await autodesk.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 The list of scopes Autodesk Platform Services supports can be found at the [Developer's Guide/Scopes](https://aps.autodesk.com/en/docs/oauth/v2/developers_guide/scopes/) page.
@@ -104,7 +104,7 @@ See the endpoint documentation for the token claims.
 
 ```ts
 const scopes = ["openid"];
-const url = autodesk.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await autodesk.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ```ts

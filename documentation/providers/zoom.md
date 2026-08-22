@@ -20,7 +20,7 @@ import * as arctic from "antarctic";
 const state = arctic.generateState();
 const codeVerifier = arctic.generateCodeVerifier();
 const scopes = ["user:read:email"];
-const url = zoom.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await zoom.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ### Validate authorization code

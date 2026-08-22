@@ -21,8 +21,12 @@ export class Synology {
 		this.client = new OAuth2Client(applicationId, applicationSecret, redirectURI);
 	}
 
-	public createAuthorizationURL(state: string, codeVerifier: string, scopes: string[]): URL {
-		const url = this.client.createAuthorizationURLWithPKCE(
+	public async createAuthorizationURL(
+		state: string,
+		codeVerifier: string,
+		scopes: string[]
+	): Promise<URL> {
+		const url = await this.client.createAuthorizationURLWithPKCE(
 			this.authorizationEndpoint,
 			state,
 			CodeChallengeMethod.S256,

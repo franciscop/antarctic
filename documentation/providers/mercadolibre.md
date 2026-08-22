@@ -18,7 +18,7 @@ const mercadolibre = new arctic.MercadoLibre(clientId, clientSecret, redirectURI
 import * as arctic from "antarctic";
 
 const state = arctic.generateState();
-const url = mercadolibre.createAuthorizationURL(state);
+const url = await mercadolibre.createAuthorizationURL(state);
 ```
 
 ### Validate authorization code

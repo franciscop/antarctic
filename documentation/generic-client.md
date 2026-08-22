@@ -26,7 +26,7 @@ Use `OAuth2Client.createAuthorizationURL()` to create an authorization URL.
 import * as arctic from "antarctic";
 
 const state = arctic.generateState();
-const url = client.createAuthorizationURL(authorizationEndpoint, state, scopes);
+const url = await client.createAuthorizationURL(authorizationEndpoint, state, scopes);
 ```
 
 For PKCE flows, use `OAuth2Client.createAuthorizationURLWithPKCE()`.
@@ -36,7 +36,7 @@ import * as arctic from "antarctic";
 
 const state = arctic.generateState();
 const codeVerifier = arctic.generateCodeVerifier();
-const url = client.createAuthorizationURLWithPKCE(
+const url = await client.createAuthorizationURLWithPKCE(
 	authorizationEndpoint,
 	state,
 	arctic.CodeChallengeMethod.S256,

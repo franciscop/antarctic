@@ -36,7 +36,7 @@ import * as arctic from "antarctic";
 const state = arctic.generateState();
 const codeVerifier = arctic.generateCodeVerifier();
 const scopes = ["email", "groups", "openid"];
-const url = synology.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await synology.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 > Note: You can find all available scopes in `/webman/sso/.well-known/openid-configuration`

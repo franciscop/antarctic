@@ -126,7 +126,7 @@ Secrets, tokens, and PKCE verifiers are never included in error messages.
 
 ## Low-level API
 
-The positional constructors and the underlying methods are unchanged and remain on the same object:
+The positional constructors and the underlying methods remain on the same object. PKCE providers build the URL asynchronously, so their `createAuthorizationURL()` returns a promise:
 
 ```ts
 import * as arctic from "antarctic";

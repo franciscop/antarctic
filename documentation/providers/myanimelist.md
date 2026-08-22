@@ -22,7 +22,7 @@ import * as arctic from "antarctic";
 
 const state = arctic.generateState();
 const codeVerifier = arctic.generateCodeVerifier();
-const url = mal.createAuthorizationURL(state, codeVerifier);
+const url = await mal.createAuthorizationURL(state, codeVerifier);
 ```
 
 ### Validate authorization code

@@ -24,7 +24,7 @@ import * as arctic from "antarctic";
 
 const state = arctic.generateState();
 const scopes = ["email", "activities.read"];
-const url = discord.createAuthorizationURL(state, null, scopes);
+const url = await discord.createAuthorizationURL(state, null, scopes);
 ```
 
 For public clients, pass the state, PKCE code verifier, and scopes.
@@ -35,7 +35,7 @@ import * as arctic from "antarctic";
 const state = arctic.generateState();
 const codeVerifier = arctic.generateCodeVerifier();
 const scopes = ["email", "activities.read"];
-const url = discord.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await discord.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ### Validate authorization code
@@ -94,7 +94,7 @@ Add the `identify` scope and use the [`/users/@me` endpoint](https://discord.com
 
 ```ts
 const scopes = ["identify"];
-const url = discord.createAuthorizationURL(state, scopes);
+const url = await discord.createAuthorizationURL(state, scopes);
 ```
 
 ```ts

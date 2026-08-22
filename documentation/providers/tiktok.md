@@ -20,7 +20,7 @@ import * as arctic from "antarctic";
 const state = arctic.generateState();
 const codeVerifier = arctic.generateCodeVerifier();
 const scopes = ["user.info.basic", "video.list"];
-const url = tiktok.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await tiktok.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ### Validate authorization code

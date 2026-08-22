@@ -18,7 +18,7 @@ const mercadopago = new arctic.MercadoPago(clientId, clientSecret, redirectURI);
 import * as arctic from "antarctic";
 
 const state = arctic.generateState();
-const url = mercadopago.createAuthorizationURL(state);
+const url = await mercadopago.createAuthorizationURL(state);
 ```
 
 ### Validate authorization code

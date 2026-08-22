@@ -56,12 +56,16 @@ export class TikTok {
 		}
 	}
 
-	public createAuthorizationURL(state: string, codeVerifier: string, scopes: string[]): URL {
+	public async createAuthorizationURL(
+		state: string,
+		codeVerifier: string,
+		scopes: string[]
+	): Promise<URL> {
 		const url = new URL(authorizationEndpoint);
 		url.searchParams.set("response_type", "code");
 		url.searchParams.set("client_key", this.clientKey);
 		url.searchParams.set("state", state);
-		const codeChallenge = createS256CodeChallenge(codeVerifier);
+		const codeChallenge = await createS256CodeChallenge(codeVerifier);
 		url.searchParams.set("code_challenge_method", "S256");
 		url.searchParams.set("code_challenge", codeChallenge);
 		if (scopes.length > 0) {
@@ -111,7 +115,7 @@ export class TikTok {
 		const auth = requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const codeVerifier = generateOAuthCodeVerifier();
-		const url = this.createAuthorizationURL(
+		const url = await this.createAuthorizationURL(
 			state,
 			codeVerifier,
 			resolveScopes(scopes, auth, defaultScopes)

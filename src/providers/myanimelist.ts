@@ -47,8 +47,8 @@ export class MyAnimeList {
 		}
 	}
 
-	public createAuthorizationURL(state: string, codeVerifier: string): URL {
-		const url = this.client.createAuthorizationURLWithPKCE(
+	public async createAuthorizationURL(state: string, codeVerifier: string): Promise<URL> {
+		const url = await this.client.createAuthorizationURLWithPKCE(
 			authorizationEndpoint,
 			state,
 			CodeChallengeMethod.Plain,
@@ -76,7 +76,7 @@ export class MyAnimeList {
 		const auth = requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const codeVerifier = generateOAuthCodeVerifier();
-		const url = this.createAuthorizationURL(state, codeVerifier);
+		const url = await this.createAuthorizationURL(state, codeVerifier);
 		await saveOAuthState(auth.store, state, { codeVerifier });
 		return url;
 	}

@@ -63,8 +63,12 @@ export class Gitea {
 		this.tokenEndpoint = joinURIAndPath(this.baseURL, "/login/oauth/access_token");
 	}
 
-	public createAuthorizationURL(state: string, codeVerifier: string, scopes: string[]): URL {
-		const url = this.client.createAuthorizationURLWithPKCE(
+	public async createAuthorizationURL(
+		state: string,
+		codeVerifier: string,
+		scopes: string[]
+	): Promise<URL> {
+		const url = await this.client.createAuthorizationURLWithPKCE(
 			this.authorizationEndpoint,
 			state,
 			CodeChallengeMethod.S256,
@@ -95,7 +99,7 @@ export class Gitea {
 		const auth = requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const codeVerifier = generateOAuthCodeVerifier();
-		const url = this.createAuthorizationURL(
+		const url = await this.createAuthorizationURL(
 			state,
 			codeVerifier,
 			resolveScopes(scopes, auth, defaultScopes)

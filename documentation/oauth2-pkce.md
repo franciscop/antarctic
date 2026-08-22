@@ -18,7 +18,7 @@ import * as arctic from "antarctic";
 const state = arctic.generateState();
 const codeVerifier = arctic.generateCodeVerifier();
 const scopes = ["user:email", "repo"];
-const url = google.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await google.createAuthorizationURL(state, codeVerifier, scopes);
 
 // store state as cookie
 setCookie("state", state, {

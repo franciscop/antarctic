@@ -25,7 +25,7 @@ import * as arctic from "antarctic";
 const state = arctic.generateState();
 const codeVerifier = arctic.generateCodeVerifier();
 const scopes = ["read:user", "write:notification"];
-const url = gitea.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await gitea.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ### Validate authorization code
@@ -84,7 +84,7 @@ Add the `read:user` scope and use the [`/user` endpoint](https://gitea.com/api/s
 
 ```ts
 const scopes = ["read:user"];
-const url = gitea.createAuthorizationURL(state, codeVerifier, scopes);
+const url = await gitea.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ```ts
