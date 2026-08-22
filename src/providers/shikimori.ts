@@ -104,7 +104,8 @@ export class Shikimori {
 			id: profileId(profile.id),
 			name: profileString(profile.nickname),
 			email: null,
-			image: image ?? profileString(profile.avatar)
+			image: image ?? profileString(profile.avatar),
+			raw: profile
 		};
 	}
 }

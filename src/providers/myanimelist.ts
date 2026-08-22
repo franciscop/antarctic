@@ -94,7 +94,8 @@ export class MyAnimeList {
 			id: profileId(profile.id),
 			name: profileString(profile.name),
 			email: null,
-			image: profileString(profile.picture)
+			image: profileString(profile.picture),
+			raw: profile
 		};
 	}
 }

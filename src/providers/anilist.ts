@@ -80,7 +80,8 @@ export class AniList {
 			id: profileId(viewer.id),
 			name: profileString(viewer.name),
 			email: null,
-			image
+			image,
+			raw: viewer
 		};
 	}
 }

@@ -103,7 +103,8 @@ export class Facebook {
 			id: profileId(profile.id),
 			name: profileString(profile.name),
 			email: profileString(profile.email),
-			image
+			image,
+			raw: profile
 		};
 	}
 }

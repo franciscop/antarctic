@@ -90,7 +90,8 @@ export class Bitbucket {
 			id: profileId(profile.uuid ?? profile.account_id),
 			name: profileString(profile.display_name) ?? profileString(profile.username),
 			email: await fetchPrimaryEmail(accessToken),
-			image
+			image,
+			raw: profile
 		};
 	}
 }

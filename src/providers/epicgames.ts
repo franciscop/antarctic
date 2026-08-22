@@ -89,7 +89,8 @@ export class EpicGames {
 			name: profileString(claims.preferred_username),
 			// Epic Games does not expose user emails or avatars.
 			email: null,
-			image: null
+			image: null,
+			raw: claims
 		};
 	}
 }

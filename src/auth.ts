@@ -5,6 +5,8 @@ export interface OAuthUser {
 	name?: string | null;
 	email?: string | null;
 	image?: string | null;
+	// The provider's own profile payload, untouched.
+	raw?: Record<string, unknown>;
 }
 
 // Structurally compatible with a polystore instance (https://polystore.dev/).

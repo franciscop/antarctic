@@ -92,7 +92,8 @@ export class BattleNet {
 			id: profileId(profile.sub),
 			name: profileString(profile.battletag),
 			email: null,
-			image: null
+			image: null,
+			raw: profile
 		};
 	}
 }

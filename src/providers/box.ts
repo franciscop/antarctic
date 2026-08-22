@@ -111,7 +111,8 @@ export class Box {
 			id: profileId(profile.id),
 			name: profileString(profile.name),
 			email: profileString(profile.login),
-			image: profileString(profile.avatar_url)
+			image: profileString(profile.avatar_url),
+			raw: profile
 		};
 	}
 }

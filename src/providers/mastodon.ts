@@ -122,7 +122,8 @@ export class Mastodon {
 			id: profileId(profile.id),
 			name: profileString(profile.display_name) ?? profileString(profile.username),
 			email: null,
-			image: profileString(profile.avatar)
+			image: profileString(profile.avatar),
+			raw: profile
 		};
 	}
 }

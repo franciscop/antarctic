@@ -107,7 +107,8 @@ export class Etsy {
 			id: userId,
 			name,
 			email: profileString(profile.primary_email),
-			image: profileString(profile.image_url_75x75)
+			image: profileString(profile.image_url_75x75),
+			raw: profile
 		};
 	}
 }

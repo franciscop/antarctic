@@ -104,7 +104,8 @@ export class VK {
 			id: profileId(user.id),
 			name: nameParts.length > 0 ? nameParts.join(" ") : null,
 			email,
-			image: profileString(user.photo_200)
+			image: profileString(user.photo_200),
+			raw: user
 		};
 	}
 }

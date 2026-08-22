@@ -114,7 +114,8 @@ export class Zoom {
 			id: profileId(profile.id),
 			name: profileString(profile.display_name) ?? (fullName !== "" ? fullName : null),
 			email: profileString(profile.email),
-			image: profileString(profile.pic_url)
+			image: profileString(profile.pic_url),
+			raw: profile
 		};
 	}
 }

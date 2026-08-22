@@ -121,7 +121,8 @@ export class Coinbase {
 			id: profileId(user.id),
 			name: profileString(user.name) ?? profileString(user.username),
 			email: profileString(user.email),
-			image: profileString(user.avatar_url)
+			image: profileString(user.avatar_url),
+			raw: user
 		};
 	}
 }

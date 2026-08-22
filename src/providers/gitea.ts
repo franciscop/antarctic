@@ -122,7 +122,8 @@ export class Gitea {
 			id: profileId(profile.id),
 			name: profileString(profile.full_name) ?? profileString(profile.login),
 			email: profileString(profile.email),
-			image: profileString(profile.avatar_url)
+			image: profileString(profile.avatar_url),
+			raw: profile
 		};
 	}
 }

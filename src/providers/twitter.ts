@@ -115,7 +115,8 @@ export class Twitter {
 			id: profileId(user.id),
 			name: profileString(user.name) ?? profileString(user.username),
 			email: null,
-			image: profileString(user.profile_image_url)
+			image: profileString(user.profile_image_url),
+			raw: user
 		};
 	}
 }

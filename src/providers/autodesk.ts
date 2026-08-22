@@ -108,7 +108,8 @@ export class Autodesk {
 			id: profileId(claims.sub),
 			name: profileString(claims.name) ?? profileString(claims.preferred_username),
 			email: profileString(claims.email),
-			image: profileString(claims.picture)
+			image: profileString(claims.picture),
+			raw: claims
 		};
 	}
 }

@@ -107,7 +107,8 @@ export class Bungie {
 			id: profileId(user.membershipId),
 			name: profileString(user.cachedBungieGlobalDisplayName) ?? profileString(user.displayName),
 			email: null,
-			image
+			image,
+			raw: user
 		};
 	}
 }

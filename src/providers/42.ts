@@ -98,7 +98,8 @@ export class FortyTwo {
 			id: profileId(profile.id),
 			name: profileString(profile.displayname) ?? profileString(profile.login),
 			email: profileString(profile.email),
-			image
+			image,
+			raw: profile
 		};
 	}
 }

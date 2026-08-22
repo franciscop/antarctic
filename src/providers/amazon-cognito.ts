@@ -132,7 +132,8 @@ export class AmazonCognito {
 				profileString(claims["cognito:username"]) ??
 				profileString(claims.username),
 			email: profileString(claims.email),
-			image: profileString(claims.picture)
+			image: profileString(claims.picture),
+			raw: claims
 		};
 	}
 }

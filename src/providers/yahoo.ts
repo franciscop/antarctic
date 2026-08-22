@@ -92,7 +92,8 @@ export class Yahoo {
 			id: profileId(claims.sub),
 			name: profileString(claims.name) ?? (fullName !== "" ? fullName : null),
 			email: profileString(claims.email),
-			image: profileString(claims.picture)
+			image: profileString(claims.picture),
+			raw: claims
 		};
 	}
 }

@@ -92,7 +92,8 @@ export class Dropbox {
 			id: profileId(profile.account_id),
 			name,
 			email: profileString(profile.email),
-			image: profileString(profile.profile_photo_url)
+			image: profileString(profile.profile_photo_url),
+			raw: profile
 		};
 	}
 }

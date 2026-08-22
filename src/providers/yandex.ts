@@ -95,7 +95,8 @@ export class Yandex {
 				profileString(profile.display_name) ??
 				profileString(profile.login),
 			email: profileString(profile.default_email),
-			image
+			image,
+			raw: profile
 		};
 	}
 }

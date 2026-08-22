@@ -111,7 +111,8 @@ export class DonationAlerts {
 			id: profileId(user.id),
 			name: profileString(user.name) ?? profileString(user.code),
 			email: profileString(user.email),
-			image: profileString(user.avatar)
+			image: profileString(user.avatar),
+			raw: user
 		};
 	}
 }

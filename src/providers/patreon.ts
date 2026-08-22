@@ -116,7 +116,8 @@ export class Patreon {
 			id: profileId(user.id),
 			name: profileString(attributes.full_name),
 			email: profileString(attributes.email),
-			image: profileString(attributes.image_url)
+			image: profileString(attributes.image_url),
+			raw: user
 		};
 	}
 }

@@ -84,7 +84,8 @@ export class Figma {
 			id: profileId(profile.id),
 			name: profileString(profile.handle),
 			email: profileString(profile.email),
-			image: profileString(profile.img_url)
+			image: profileString(profile.img_url),
+			raw: profile
 		};
 	}
 }

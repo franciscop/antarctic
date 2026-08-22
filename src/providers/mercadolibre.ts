@@ -124,7 +124,8 @@ export class MercadoLibre {
 			id: profileId(profile.id),
 			name: fullName !== "" ? fullName : profileString(profile.nickname),
 			email: profileString(profile.email),
-			image
+			image,
+			raw: profile
 		};
 	}
 }

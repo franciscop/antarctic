@@ -83,7 +83,8 @@ export class Reddit {
 			id: profileId(profile.id),
 			name: profileString(profile.name),
 			email: null,
-			image: profileString(profile.icon_img)
+			image: profileString(profile.icon_img),
+			raw: profile
 		};
 	}
 }

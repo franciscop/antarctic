@@ -114,7 +114,8 @@ export class Roblox {
 			id: profileId(claims.sub),
 			name: profileString(claims.name) ?? profileString(claims.preferred_username),
 			email: null,
-			image: profileString(claims.picture)
+			image: profileString(claims.picture),
+			raw: claims
 		};
 	}
 }

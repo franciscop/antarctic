@@ -106,7 +106,8 @@ export class Osu {
 			id: profileId(profile.id),
 			name: profileString(profile.username),
 			email: null,
-			image: profileString(profile.avatar_url)
+			image: profileString(profile.avatar_url),
+			raw: profile
 		};
 	}
 }

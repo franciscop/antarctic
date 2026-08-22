@@ -107,7 +107,8 @@ export class Atlassian {
 			id: profileId(profile.account_id),
 			name: profileString(profile.name) ?? profileString(profile.nickname),
 			email: profileString(profile.email),
-			image: profileString(profile.picture)
+			image: profileString(profile.picture),
+			raw: profile
 		};
 	}
 }

@@ -133,7 +133,8 @@ export class Auth0 {
 			id: profileId(claims.sub),
 			name: profileString(claims.name) ?? profileString(claims.nickname),
 			email: profileString(claims.email),
-			image: profileString(claims.picture)
+			image: profileString(claims.picture),
+			raw: claims
 		};
 	}
 }

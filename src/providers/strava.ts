@@ -109,7 +109,8 @@ export class Strava {
 			id: profileId(profile.id),
 			name: name !== "" ? name : null,
 			email: null,
-			image: profileString(profile.profile)
+			image: profileString(profile.profile),
+			raw: profile
 		};
 	}
 }

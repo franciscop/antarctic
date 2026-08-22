@@ -117,7 +117,8 @@ export class Twitch {
 			id: profileId(user.id),
 			name: profileString(user.display_name) ?? profileString(user.login),
 			email: profileString(user.email),
-			image: profileString(user.profile_image_url)
+			image: profileString(user.profile_image_url),
+			raw: user
 		};
 	}
 }

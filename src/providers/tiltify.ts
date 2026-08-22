@@ -114,7 +114,8 @@ export class Tiltify {
 			id: profileId(user.id),
 			name: profileString(user.username),
 			email: null,
-			image
+			image,
+			raw: user
 		};
 	}
 }

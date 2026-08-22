@@ -92,7 +92,8 @@ vitest.test("Google.getUser() uses PKCE and the ID token", async () => {
 		sub: "12345",
 		name: "Ada Lovelace",
 		email: "ada@example.com",
-		picture: "https://example.com/ada.jpg"
+		picture: "https://example.com/ada.jpg",
+		hd: "example.com"
 	};
 	const encode = (value: object): string =>
 		Buffer.from(JSON.stringify(value)).toString("base64url");
@@ -110,8 +111,11 @@ vitest.test("Google.getUser() uses PKCE and the ID token", async () => {
 			id: "12345",
 			name: "Ada Lovelace",
 			email: "ada@example.com",
-			image: "https://example.com/ada.jpg"
+			image: "https://example.com/ada.jpg",
+			// For OIDC providers raw is the decoded ID token claims.
+			raw: claims
 		});
+		vitest.expect(user.raw?.hd).toBe("example.com");
 		vitest.expect(sentBody).toContain(`code_verifier=${stored.codeVerifier}`);
 		vitest.expect(store.data.size).toBe(0);
 	} finally {

@@ -91,7 +91,8 @@ export class Tumblr {
 			id: profileId(user.name),
 			name: profileString(user.name),
 			email: null,
-			image: null
+			image: null,
+			raw: user
 		};
 	}
 }

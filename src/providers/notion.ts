@@ -91,7 +91,8 @@ export class Notion {
 			id: profileId(profile.id),
 			name: profileString(profile.name),
 			email,
-			image: profileString(profile.avatar_url)
+			image: profileString(profile.avatar_url),
+			raw: profile
 		};
 	}
 }

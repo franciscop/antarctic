@@ -108,7 +108,8 @@ export class WorkOS {
 			id: profileId(profile.id),
 			name: profileString(profile.name) ?? (fullName !== "" ? fullName : null),
 			email: profileString(profile.email),
-			image: profileString(profile.profile_picture_url)
+			image: profileString(profile.profile_picture_url),
+			raw: profile
 		};
 	}
 }

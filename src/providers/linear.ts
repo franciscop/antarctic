@@ -94,7 +94,8 @@ export class Linear {
 			id: profileId(viewer.id),
 			name: profileString(viewer.name),
 			email: profileString(viewer.email),
-			image: profileString(viewer.avatarUrl)
+			image: profileString(viewer.avatarUrl),
+			raw: viewer
 		};
 	}
 }

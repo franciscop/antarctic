@@ -141,7 +141,8 @@ export class Kick {
 			id: profileId(profile.user_id),
 			name: profileString(profile.name),
 			email: profileString(profile.email),
-			image: profileString(profile.profile_picture)
+			image: profileString(profile.profile_picture),
+			raw: profile
 		};
 	}
 }

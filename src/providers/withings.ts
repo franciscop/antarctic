@@ -101,7 +101,8 @@ export class Withings {
 			id: profileId(data.userid),
 			name: null,
 			email: null,
-			image: null
+			image: null,
+			raw: data
 		};
 	}
 }

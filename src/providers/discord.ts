@@ -115,7 +115,8 @@ export class Discord {
 			id,
 			name: profileString(profile.global_name) ?? profileString(profile.username),
 			email: profileString(profile.email),
-			image: avatar === null ? null : `https://cdn.discordapp.com/avatars/${id}/${avatar}.png`
+			image: avatar === null ? null : `https://cdn.discordapp.com/avatars/${id}/${avatar}.png`,
+			raw: profile
 		};
 	}
 }

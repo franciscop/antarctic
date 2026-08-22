@@ -95,7 +95,8 @@ export class Intuit {
 			id: profileId(claims.sub),
 			name,
 			email: profileString(claims.email),
-			image: null
+			image: null,
+			raw: claims
 		};
 	}
 }

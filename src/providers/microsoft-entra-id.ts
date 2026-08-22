@@ -171,7 +171,8 @@ export class MicrosoftEntraId {
 			id: profileId(claims.sub),
 			name: profileString(claims.name),
 			email: profileString(claims.email) ?? profileString(claims.preferred_username),
-			image: profileString(claims.picture)
+			image: profileString(claims.picture),
+			raw: claims
 		};
 	}
 }

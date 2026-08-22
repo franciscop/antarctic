@@ -99,7 +99,8 @@ export class Lichess {
 			id: profileId(profile.id),
 			name: profileString(profile.username),
 			email,
-			image: null
+			image: null,
+			raw: profile
 		};
 	}
 }

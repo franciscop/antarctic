@@ -113,7 +113,8 @@ export class Spotify {
 			id: profileId(profile.id),
 			name: profileString(profile.display_name),
 			email: profileString(profile.email),
-			image
+			image,
+			raw: profile
 		};
 	}
 }

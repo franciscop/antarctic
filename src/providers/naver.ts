@@ -107,7 +107,8 @@ export class Naver {
 			id: profileId(user.id),
 			name: profileString(user.name) ?? profileString(user.nickname),
 			email: profileString(user.email),
-			image: profileString(user.profile_image)
+			image: profileString(user.profile_image),
+			raw: user
 		};
 	}
 }

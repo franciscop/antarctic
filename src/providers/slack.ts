@@ -89,7 +89,8 @@ export class Slack {
 			id: profileId(claims.sub),
 			name: profileString(claims.name),
 			email: profileString(claims.email),
-			image: profileString(claims.picture)
+			image: profileString(claims.picture),
+			raw: claims
 		};
 	}
 }

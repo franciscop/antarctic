@@ -24,10 +24,13 @@ interface OAuthUser {
 	name?: string | null;
 	email?: string | null;
 	image?: string | null;
+	raw?: Record<string, unknown>;
 }
 ```
 
 Fields the provider does not expose are `null`.
+
+`raw` is the provider's own payload, so you can read fields the normalized shape does not model. It is the profile response for providers with a user endpoint, and the decoded ID token claims for OIDC providers.
 
 ## OAuthConfigurationError
 

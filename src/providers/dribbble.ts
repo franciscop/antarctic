@@ -96,7 +96,8 @@ export class Dribbble {
 			name: profileString(profile.name) ?? profileString(profile.login),
 			// The v2 user endpoint does not expose an email address.
 			email: null,
-			image: profileString(profile.avatar_url)
+			image: profileString(profile.avatar_url),
+			raw: profile
 		};
 	}
 }

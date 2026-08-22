@@ -143,7 +143,8 @@ vitest.test("GitHub.getUser()", async () => {
 				login: "octocat",
 				name: "The Octocat",
 				email: "octocat@github.com",
-				avatar_url: "https://avatars.githubusercontent.com/u/1"
+				avatar_url: "https://avatars.githubusercontent.com/u/1",
+				company: "GitHub"
 			});
 		}
 		throw new Error(`Unexpected request: ${requestURL}`);
@@ -155,8 +156,18 @@ vitest.test("GitHub.getUser()", async () => {
 			id: "1",
 			name: "The Octocat",
 			email: "octocat@github.com",
-			image: "https://avatars.githubusercontent.com/u/1"
+			image: "https://avatars.githubusercontent.com/u/1",
+			// The untouched /user response, so provider-specific fields survive.
+			raw: {
+				id: 1,
+				login: "octocat",
+				name: "The Octocat",
+				email: "octocat@github.com",
+				avatar_url: "https://avatars.githubusercontent.com/u/1",
+				company: "GitHub"
+			}
 		});
+		vitest.expect(user.raw?.company).toBe("GitHub");
 		// The state is single use.
 		await vitest
 			.expect(github.getUser(`?code=abc&state=${state}`))

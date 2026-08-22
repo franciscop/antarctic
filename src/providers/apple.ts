@@ -117,7 +117,8 @@ export class Apple {
 			id: profileId(claims.sub),
 			name: null,
 			email: profileString(claims.email),
-			image: null
+			image: null,
+			raw: claims
 		};
 	}
 

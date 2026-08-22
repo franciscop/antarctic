@@ -147,7 +147,8 @@ export class TikTok {
 			id: profileId(user.open_id),
 			name: profileString(user.display_name),
 			email: null,
-			image: profileString(user.avatar_url)
+			image: profileString(user.avatar_url),
+			raw: user
 		};
 	}
 }

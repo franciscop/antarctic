@@ -138,7 +138,8 @@ export class Polar {
 			name: profileString(claims.name),
 			email: profileString(claims.email),
 			// Polar's userinfo response has no avatar field.
-			image: null
+			image: null,
+			raw: claims
 		};
 	}
 }

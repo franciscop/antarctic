@@ -53,10 +53,20 @@ The result is the same shape for every provider:
 	name?: string | null;
 	email?: string | null;
 	image?: string | null;
+	raw?: Record<string, unknown>;
 }
 ```
 
 Fields a provider does not expose are `null`. Reddit and Strava, for example, never return an email.
+
+`raw` carries the provider's own payload for the fields the normalized shape does not model, such as a GitHub `company`, a Google `hd` domain, or a Keycloak `groups` claim:
+
+```ts
+const user = await github.getUser(request.url);
+user.raw?.company;
+```
+
+For providers with a user endpoint it is that response. For OIDC providers it is the decoded ID token claims.
 
 Sessions, cookies, and your own user table are out of scope: take the returned user and store it however your application needs.
 

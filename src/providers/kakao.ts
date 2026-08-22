@@ -119,7 +119,8 @@ export class Kakao {
 			id: profileId(profile.id),
 			name,
 			email,
-			image
+			image,
+			raw: profile
 		};
 	}
 }
