@@ -79,4 +79,12 @@ export {
 	OAuthConfigurationError,
 	OAuthProviderError
 } from "./auth.js";
-export type { OAuthCallbackQuery, OAuthStateStore, OAuthUser, ProviderOptions } from "./auth.js";
+export type {
+	AuthorizationRequest,
+	OAuthCallbackQuery,
+	OAuthStateStore,
+	OAuthUser,
+	ProviderOptions,
+	SavedOAuthState,
+	StoredOAuthState
+} from "./auth.js";

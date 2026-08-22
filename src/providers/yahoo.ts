@@ -1,7 +1,7 @@
 import { OAuth2Client } from "../client.js";
 import { decodeIdToken } from "../oidc.js";
 import {
-	consumeOAuthState,
+	extractOAuthTokens,
 	fetchUserProfile,
 	generateOAuthState,
 	parseCallbackQuery,
@@ -9,12 +9,20 @@ import {
 	profileString,
 	requireAuthConfig,
 	resolveAuthConfig,
+	resolveOAuthState,
 	resolveScopes,
 	saveOAuthState
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
-import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
+import type {
+	AuthorizationRequest,
+	AuthConfig,
+	OAuthCallbackQuery,
+	OAuthUser,
+	ProviderOptions,
+	SavedOAuthState
+} from "../auth.js";
 
 const authorizationEndpoint = "https://api.login.yahoo.com/oauth2/request_auth";
 const tokenEndpoint = "https://api.login.yahoo.com/oauth2/get_token";
@@ -66,18 +74,19 @@ export class Yahoo {
 		return tokens;
 	}
 
-	public async getAuthorizationURL(scopes?: string[]): Promise<URL> {
+	public async getAuthorizationURL(scopes?: string[]): Promise<AuthorizationRequest> {
 		const auth = requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const url = this.createAuthorizationURL(state, resolveScopes(scopes, auth, defaultScopes));
-		await saveOAuthState(auth.store, state, {});
-		return url;
+		const payload = {};
+		await saveOAuthState(auth.store, state, payload);
+		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
 		const auth = requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		await consumeOAuthState(auth.store, state);
+		await resolveOAuthState(auth.store, state, saved);
 		const tokens = await this.validateAuthorizationCode(code);
 		let claims: Record<string, unknown>;
 		if ("id_token" in (tokens.data as object)) {
@@ -93,7 +102,8 @@ export class Yahoo {
 			name: profileString(claims.name) ?? (fullName !== "" ? fullName : null),
 			email: profileString(claims.email),
 			image: profileString(claims.picture),
-			raw: claims
+			raw: claims,
+			...extractOAuthTokens(tokens)
 		};
 	}
 }

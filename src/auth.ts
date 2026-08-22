@@ -1,5 +1,7 @@
 import { generateCodeVerifier, generateState } from "./oauth2.js";
 
+import type { OAuth2Tokens } from "./oauth2.js";
+
 export interface OAuthUser {
 	id: string;
 	name?: string | null;
@@ -7,6 +9,9 @@ export interface OAuthUser {
 	image?: string | null;
 	// The provider's own profile payload, untouched.
 	raw?: Record<string, unknown>;
+	accessToken?: string;
+	refreshToken?: string | null;
+	scopes?: string[] | null;
 }
 
 // Structurally compatible with a polystore instance (https://polystore.dev/).
@@ -177,6 +182,47 @@ export async function consumeOAuthState(
 	}
 	await store.del(key);
 	return payload as StoredOAuthState;
+}
+
+export interface AuthorizationRequest {
+	url: URL;
+	state: string;
+	payload: StoredOAuthState;
+}
+
+export interface SavedOAuthState {
+	state: string;
+	payload?: StoredOAuthState;
+}
+
+// With `saved` the caller kept the state itself, so comparing it against the
+// value the provider echoed back is the CSRF check. Otherwise the store is.
+export async function resolveOAuthState(
+	store: OAuthStateStore,
+	state: string,
+	saved?: SavedOAuthState
+): Promise<StoredOAuthState> {
+	if (saved !== undefined) {
+		if (saved.state !== state) {
+			throw new InvalidOAuthStateError();
+		}
+		return saved.payload ?? {};
+	}
+	return await consumeOAuthState(store, state);
+}
+
+// OAuth2Tokens throws on absent fields, and most providers omit the refresh
+// token and scopes unless they were asked for.
+export function extractOAuthTokens(tokens: OAuth2Tokens): {
+	accessToken: string;
+	refreshToken: string | null;
+	scopes: string[] | null;
+} {
+	return {
+		accessToken: tokens.accessToken(),
+		refreshToken: tokens.hasRefreshToken() ? tokens.refreshToken() : null,
+		scopes: tokens.hasScopes() ? tokens.scopes() : null
+	};
 }
 
 export type OAuthCallbackQuery =

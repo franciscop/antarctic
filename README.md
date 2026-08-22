@@ -22,14 +22,24 @@ const scopes = ["read:user", "user:email"];
 const github = new auth.GitHub({ store, scopes });
 
 // Redirect the user here to sign in.
-const url = await github.getAuthorizationURL();
+const { url } = await github.getAuthorizationURL();
 
 // In the OAuth callback route:
 const user = await github.getUser(request.url);
 // { id: "1", name: "The Octocat", email: "octocat@github.com", image: "https://..." }
 ```
 
-`getUser()` accepts the callback query as a full URL, a query string, a `URLSearchParams`, or a plain object. It validates the `state`, exchanges the code (with PKCE where the provider supports it), fetches the profile, deletes the consumed state, and returns a normalized user: `{ id, name, email, image }`.
+`getAuthorizationURL()` returns `{ url, state, payload }`. The state and payload are already in the store, so you only need `url` unless you would rather persist them yourself.
+
+`getUser()` accepts the callback query as a full URL, a query string, a `URLSearchParams`, or a plain object. It validates the `state`, exchanges the code (with PKCE where the provider supports it), fetches the profile, deletes the consumed state, and returns the user along with the tokens: `{ id, name, email, image, raw, accessToken, refreshToken, scopes }`.
+
+Pass the state back as a second argument to skip the store entirely, for example when you keep it in a signed cookie:
+
+```ts
+const { url, state, payload } = await github.getAuthorizationURL();
+// ...later, in the callback route
+const user = await github.getUser(request.url, { state, payload });
+```
 
 Options resolve as `explicit > environment > provider default`. Every option except `store` can come from the environment, named after the provider:
 

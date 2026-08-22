@@ -1,6 +1,6 @@
 import { createOAuth2Request, sendTokenRequest } from "../request.js";
 import {
-	consumeOAuthState,
+	extractOAuthTokens,
 	fetchUserProfile,
 	generateOAuthState,
 	OAuthProviderError,
@@ -9,11 +9,19 @@ import {
 	profileString,
 	requireAuthConfig,
 	resolveAuthConfig,
+	resolveOAuthState,
 	saveOAuthState
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
-import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
+import type {
+	AuthorizationRequest,
+	AuthConfig,
+	OAuthCallbackQuery,
+	OAuthUser,
+	ProviderOptions,
+	SavedOAuthState
+} from "../auth.js";
 
 const authorizationEndpoint = "https://nid.naver.com/oauth2.0/authorize";
 const tokenEndpoint = "https://nid.naver.com/oauth2.0/token";
@@ -83,19 +91,20 @@ export class Naver {
 	}
 
 	// Naver scopes are configured in the application settings, so the argument is ignored.
-	public async getAuthorizationURL(_scopes?: string[]): Promise<URL> {
+	public async getAuthorizationURL(_scopes?: string[]): Promise<AuthorizationRequest> {
 		const auth = requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const url = this.createAuthorizationURL();
 		url.searchParams.set("state", state);
-		await saveOAuthState(auth.store, state, {});
-		return url;
+		const payload = {};
+		await saveOAuthState(auth.store, state, payload);
+		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
 		const auth = requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		await consumeOAuthState(auth.store, state);
+		await resolveOAuthState(auth.store, state, saved);
 		const tokens = await this.validateAuthorizationCode(code);
 		const profile = await fetchUserProfile(userEndpoint, tokens.accessToken());
 		const response = profile.response;
@@ -108,7 +117,8 @@ export class Naver {
 			name: profileString(user.name) ?? profileString(user.nickname),
 			email: profileString(user.email),
 			image: profileString(user.profile_image),
-			raw: user
+			raw: user,
+			...extractOAuthTokens(tokens)
 		};
 	}
 }

@@ -1,6 +1,6 @@
 import { OAuth2Client } from "../client.js";
 import {
-	consumeOAuthState,
+	extractOAuthTokens,
 	generateOAuthState,
 	OAuthProviderError,
 	parseCallbackQuery,
@@ -8,11 +8,19 @@ import {
 	profileString,
 	requireAuthConfig,
 	resolveAuthConfig,
+	resolveOAuthState,
 	saveOAuthState
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
-import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
+import type {
+	AuthorizationRequest,
+	AuthConfig,
+	OAuthCallbackQuery,
+	OAuthUser,
+	ProviderOptions,
+	SavedOAuthState
+} from "../auth.js";
 
 const authorizationEndpoint = "https://anilist.co/api/v2/oauth/authorize";
 const tokenEndpoint = "https://anilist.co/api/v2/oauth/token";
@@ -58,18 +66,19 @@ export class AniList {
 		return tokens;
 	}
 
-	public async getAuthorizationURL(): Promise<URL> {
+	public async getAuthorizationURL(): Promise<AuthorizationRequest> {
 		const auth = requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const url = this.createAuthorizationURL(state);
-		await saveOAuthState(auth.store, state, {});
-		return url;
+		const payload = {};
+		await saveOAuthState(auth.store, state, payload);
+		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
 		const auth = requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		await consumeOAuthState(auth.store, state);
+		await resolveOAuthState(auth.store, state, saved);
 		const tokens = await this.validateAuthorizationCode(code);
 		const viewer = await fetchViewer(tokens.accessToken());
 		let image: string | null = null;
@@ -81,7 +90,8 @@ export class AniList {
 			name: profileString(viewer.name),
 			email: null,
 			image,
-			raw: viewer
+			raw: viewer,
+			...extractOAuthTokens(tokens)
 		};
 	}
 }

@@ -1,6 +1,6 @@
 import { OAuth2Client } from "../client.js";
 import {
-	consumeOAuthState,
+	extractOAuthTokens,
 	fetchUserProfile,
 	generateOAuthState,
 	parseCallbackQuery,
@@ -8,12 +8,20 @@ import {
 	profileString,
 	requireAuthConfig,
 	resolveAuthConfig,
+	resolveOAuthState,
 	resolveScopes,
 	saveOAuthState
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
-import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
+import type {
+	AuthorizationRequest,
+	AuthConfig,
+	OAuthCallbackQuery,
+	OAuthUser,
+	ProviderOptions,
+	SavedOAuthState
+} from "../auth.js";
 
 const authorizationEndpoint = "https://www.tumblr.com/oauth2/authorize";
 const tokenEndpoint = "https://api.tumblr.com/v2/oauth2/token";
@@ -65,18 +73,19 @@ export class Tumblr {
 		return tokens;
 	}
 
-	public async getAuthorizationURL(scopes?: string[]): Promise<URL> {
+	public async getAuthorizationURL(scopes?: string[]): Promise<AuthorizationRequest> {
 		const auth = requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const url = this.createAuthorizationURL(state, resolveScopes(scopes, auth, defaultScopes));
-		await saveOAuthState(auth.store, state, {});
-		return url;
+		const payload = {};
+		await saveOAuthState(auth.store, state, payload);
+		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
 		const auth = requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		await consumeOAuthState(auth.store, state);
+		await resolveOAuthState(auth.store, state, saved);
 		const tokens = await this.validateAuthorizationCode(code);
 		const profile = await fetchUserProfile(userEndpoint, tokens.accessToken());
 		let user: Record<string, unknown> = {};
@@ -92,7 +101,8 @@ export class Tumblr {
 			name: profileString(user.name),
 			email: null,
 			image: null,
-			raw: user
+			raw: user,
+			...extractOAuthTokens(tokens)
 		};
 	}
 }

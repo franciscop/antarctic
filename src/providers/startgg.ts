@@ -1,6 +1,6 @@
 import { createOAuth2Request, sendTokenRequest } from "../request.js";
 import {
-	consumeOAuthState,
+	extractOAuthTokens,
 	generateOAuthState,
 	OAuthProviderError,
 	parseCallbackQuery,
@@ -8,12 +8,20 @@ import {
 	profileString,
 	requireAuthConfig,
 	resolveAuthConfig,
+	resolveOAuthState,
 	resolveScopes,
 	saveOAuthState
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
-import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
+import type {
+	AuthorizationRequest,
+	AuthConfig,
+	OAuthCallbackQuery,
+	OAuthUser,
+	ProviderOptions,
+	SavedOAuthState
+} from "../auth.js";
 
 const authorizationEndpoint = "https://start.gg/oauth/authorize";
 const tokenEndpoint = "https://api.start.gg/oauth/access_token";
@@ -145,19 +153,20 @@ export class StartGG {
 		return tokens;
 	}
 
-	public async getAuthorizationURL(scopes?: string[]): Promise<URL> {
+	public async getAuthorizationURL(scopes?: string[]): Promise<AuthorizationRequest> {
 		const auth = requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const resolved = resolveScopes(scopes, auth, defaultScopes);
 		const url = this.createAuthorizationURL(state, resolved);
-		await saveOAuthState(auth.store, state, { scopes: resolved });
-		return url;
+		const payload = { scopes: resolved };
+		await saveOAuthState(auth.store, state, payload);
+		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
 		const auth = requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		const stored = await consumeOAuthState(auth.store, state);
+		const stored = await resolveOAuthState(auth.store, state, saved);
 		const tokens = await this.validateAuthorizationCode(
 			code,
 			stored.scopes ?? resolveScopes(undefined, auth, defaultScopes)
@@ -173,7 +182,8 @@ export class StartGG {
 			name: profileString(profile.name),
 			email: profileString(profile.email),
 			image,
-			raw: profile
+			raw: profile,
+			...extractOAuthTokens(tokens)
 		};
 	}
 }

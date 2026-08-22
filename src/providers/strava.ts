@@ -1,6 +1,6 @@
 import { createOAuth2Request, sendTokenRequest } from "../request.js";
 import {
-	consumeOAuthState,
+	extractOAuthTokens,
 	fetchUserProfile,
 	generateOAuthState,
 	parseCallbackQuery,
@@ -8,12 +8,20 @@ import {
 	profileString,
 	requireAuthConfig,
 	resolveAuthConfig,
+	resolveOAuthState,
 	resolveScopes,
 	saveOAuthState
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
-import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
+import type {
+	AuthorizationRequest,
+	AuthConfig,
+	OAuthCallbackQuery,
+	OAuthUser,
+	ProviderOptions,
+	SavedOAuthState
+} from "../auth.js";
 
 const authorizationEndpoint = "https://www.strava.com/oauth/authorize";
 const tokenEndpoint = "https://www.strava.com/api/v3/oauth/token";
@@ -88,18 +96,19 @@ export class Strava {
 		return tokens;
 	}
 
-	public async getAuthorizationURL(scopes?: string[]): Promise<URL> {
+	public async getAuthorizationURL(scopes?: string[]): Promise<AuthorizationRequest> {
 		const auth = requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const url = this.createAuthorizationURL(state, resolveScopes(scopes, auth, defaultScopes));
-		await saveOAuthState(auth.store, state, {});
-		return url;
+		const payload = {};
+		await saveOAuthState(auth.store, state, payload);
+		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
 		const auth = requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		await consumeOAuthState(auth.store, state);
+		await resolveOAuthState(auth.store, state, saved);
 		const tokens = await this.validateAuthorizationCode(code);
 		const profile = await fetchUserProfile(userEndpoint, tokens.accessToken());
 		const firstName = profileString(profile.firstname);
@@ -110,7 +119,8 @@ export class Strava {
 			name: name !== "" ? name : null,
 			email: null,
 			image: profileString(profile.profile),
-			raw: profile
+			raw: profile,
+			...extractOAuthTokens(tokens)
 		};
 	}
 }

@@ -20,12 +20,14 @@ Any key-value store polystore supports works, including Redis, Cloudflare KV, an
 
 ## Authorization
 
-`getAuthorizationURL()` returns a `URL` to redirect the user to. It generates a fresh `state`, generates a PKCE verifier when the provider uses PKCE, and stores both under the `state` key for ten minutes.
+`getAuthorizationURL()` generates a fresh `state`, generates a PKCE verifier when the provider uses PKCE, and stores both under the `state` key for ten minutes. It returns the URL to redirect the user to, along with the values it stored:
 
 ```ts
-const url = await github.getAuthorizationURL();
+const { url, state, payload } = await github.getAuthorizationURL();
 return Response.redirect(url);
 ```
+
+`state` is the CSRF token and `payload` carries the PKCE verifier, empty for providers without PKCE. Both are already in the store, so you can ignore them unless you would rather keep them yourself. See [keeping the state yourself](#keeping-the-state-yourself).
 
 It takes an optional scope list, covered in [Scopes](#scopes).
 
@@ -54,6 +56,9 @@ The result is the same shape for every provider:
 	email?: string | null;
 	image?: string | null;
 	raw?: Record<string, unknown>;
+	accessToken?: string;
+	refreshToken?: string | null;
+	scopes?: string[] | null;
 }
 ```
 
@@ -68,7 +73,29 @@ user.raw?.company;
 
 For providers with a user endpoint it is that response. For OIDC providers it is the decoded ID token claims.
 
+`accessToken` is what makes the granted scopes usable, so you can call the provider's API as the user without running the flow again. `refreshToken` and `scopes` are `null` when the provider did not return them, which is the common case unless you asked for offline access:
+
+```ts
+const user = await github.getUser(request.url);
+await fetch("https://api.github.com/user/repos", {
+	headers: { Authorization: `Bearer ${user.accessToken}` }
+});
+```
+
 Sessions, cookies, and your own user table are out of scope: take the returned user and store it however your application needs.
+
+## Keeping the state yourself
+
+Pass the `state` and `payload` back as a second argument and the store is never read. The `state` you saved is compared against the one the provider echoed back, which is the CSRF check:
+
+```ts
+const { url, state, payload } = await github.getAuthorizationURL();
+// Persist these however you like, a signed cookie for example.
+
+const user = await github.getUser(request.url, { state, payload });
+```
+
+A mismatch throws `InvalidOAuthStateError`. The store is still required when constructing the provider, and `getAuthorizationURL()` still writes to it.
 
 ## Configuration
 

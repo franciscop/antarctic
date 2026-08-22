@@ -79,13 +79,14 @@ vitest.test("Google.getUser() uses PKCE and the ID token", async () => {
 		store
 	});
 
-	const url = await google.getAuthorizationURL();
-	const state = url.searchParams.get("state") ?? "";
+	const { url, state, payload } = await google.getAuthorizationURL();
 	vitest.expect(url.searchParams.get("code_challenge_method")).toBe("S256");
 	vitest.expect(url.searchParams.get("scope")).toBe("openid profile email");
 
+	// PKCE providers hand the verifier back so the caller can persist it.
 	const stored = store.data.get(`arctic:state:${state}`) as { codeVerifier?: string };
 	vitest.expect(typeof stored.codeVerifier).toBe("string");
+	vitest.expect(payload.codeVerifier).toBe(stored.codeVerifier);
 
 	// A JWT with the claims Google returns; the signature is never verified here.
 	const claims = {
@@ -102,7 +103,12 @@ vitest.test("Google.getUser() uses PKCE and the ID token", async () => {
 	let sentBody = "";
 	const fetchMock = vitest.vi.fn(async (input: Request) => {
 		sentBody = await input.text();
-		return Response.json({ access_token: "token", token_type: "Bearer", id_token: idToken });
+		return Response.json({
+			access_token: "token",
+			token_type: "Bearer",
+			id_token: idToken,
+			scope: "openid profile email"
+		});
 	});
 	vitest.vi.stubGlobal("fetch", fetchMock);
 	try {
@@ -113,7 +119,10 @@ vitest.test("Google.getUser() uses PKCE and the ID token", async () => {
 			email: "ada@example.com",
 			image: "https://example.com/ada.jpg",
 			// For OIDC providers raw is the decoded ID token claims.
-			raw: claims
+			raw: claims,
+			accessToken: "token",
+			refreshToken: null,
+			scopes: ["openid", "profile", "email"]
 		});
 		vitest.expect(user.raw?.hd).toBe("example.com");
 		vitest.expect(sentBody).toContain(`code_verifier=${stored.codeVerifier}`);
@@ -121,4 +130,38 @@ vitest.test("Google.getUser() uses PKCE and the ID token", async () => {
 	} finally {
 		vitest.vi.unstubAllGlobals();
 	}
+});
+
+// A runtime loop would need every provider's endpoints mocked, so this reads the
+// source instead: it is the check that a newly added provider cannot skip.
+vitest.test("every provider's getUser() returns raw and the tokens", async () => {
+	const fs = await import("node:fs");
+	const dir = new URL("./providers/", import.meta.url);
+	const files = fs.readdirSync(dir).filter((name) => name.endsWith(".ts"));
+	vitest.expect(files.length).toBe(64);
+
+	const withGetUser = [];
+	for (const file of files) {
+		const source = fs.readFileSync(new URL(file, dir), "utf8");
+		const start = source.indexOf("public async getUser(");
+		if (start === -1) {
+			// Synology has no user profile endpoint, so it stays low-level only.
+			vitest.expect(file, `${file} unexpectedly has no getUser()`).toBe("synology.ts");
+			continue;
+		}
+		withGetUser.push(file);
+		const open = source.indexOf("return {", start);
+		const block = source.slice(open, source.indexOf("\n\t\t};", open));
+		vitest.expect(block, `${file} is missing raw`).toMatch(/\braw:/);
+		vitest
+			.expect(block, `${file} is missing the tokens`)
+			.toContain("...extractOAuthTokens(tokens)");
+		vitest
+			.expect(source, `${file} does not accept saved state`)
+			.toContain("saved?: SavedOAuthState");
+		vitest
+			.expect(source, `${file} does not return the state and payload`)
+			.toContain("return { url, state, payload };");
+	}
+	vitest.expect(withGetUser.length).toBe(63);
 });

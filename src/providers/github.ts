@@ -8,7 +8,7 @@ import {
 } from "../request.js";
 import { OAuth2Tokens } from "../oauth2.js";
 import {
-	consumeOAuthState,
+	extractOAuthTokens,
 	fetchUserProfile,
 	generateOAuthState,
 	parseCallbackQuery,
@@ -16,11 +16,19 @@ import {
 	profileString,
 	requireAuthConfig,
 	resolveAuthConfig,
+	resolveOAuthState,
 	resolveScopes,
 	saveOAuthState
 } from "../auth.js";
 
-import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
+import type {
+	AuthorizationRequest,
+	AuthConfig,
+	OAuthCallbackQuery,
+	OAuthUser,
+	ProviderOptions,
+	SavedOAuthState
+} from "../auth.js";
 
 const authorizationEndpoint = "https://github.com/login/oauth/authorize";
 const tokenEndpoint = "https://github.com/login/oauth/access_token";
@@ -96,18 +104,19 @@ export class GitHub {
 		return tokens;
 	}
 
-	public async getAuthorizationURL(scopes?: string[]): Promise<URL> {
+	public async getAuthorizationURL(scopes?: string[]): Promise<AuthorizationRequest> {
 		const auth = requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const url = this.createAuthorizationURL(state, resolveScopes(scopes, auth, defaultScopes));
-		await saveOAuthState(auth.store, state, {});
-		return url;
+		const payload = {};
+		await saveOAuthState(auth.store, state, payload);
+		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
 		const auth = requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		await consumeOAuthState(auth.store, state);
+		await resolveOAuthState(auth.store, state, saved);
 		const tokens = await this.validateAuthorizationCode(code);
 		const accessToken = tokens.accessToken();
 		const profile = await fetchUserProfile(userEndpoint, accessToken);
@@ -120,7 +129,8 @@ export class GitHub {
 			name: profileString(profile.name) ?? profileString(profile.login),
 			email,
 			image: profileString(profile.avatar_url),
-			raw: profile
+			raw: profile,
+			...extractOAuthTokens(tokens)
 		};
 	}
 }

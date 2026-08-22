@@ -1,6 +1,6 @@
 import { createOAuth2Request, sendTokenRequest } from "../request.js";
 import {
-	consumeOAuthState,
+	extractOAuthTokens,
 	fetchUserProfile,
 	generateOAuthState,
 	OAuthProviderError,
@@ -9,12 +9,20 @@ import {
 	profileString,
 	requireAuthConfig,
 	resolveAuthConfig,
+	resolveOAuthState,
 	resolveScopes,
 	saveOAuthState
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
-import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
+import type {
+	AuthorizationRequest,
+	AuthConfig,
+	OAuthCallbackQuery,
+	OAuthUser,
+	ProviderOptions,
+	SavedOAuthState
+} from "../auth.js";
 
 const authorizationEndpoint = "https://www.donationalerts.com/oauth/authorize";
 const tokenEndpoint = "https://www.donationalerts.com/oauth/token";
@@ -86,20 +94,21 @@ export class DonationAlerts {
 		return tokens;
 	}
 
-	public async getAuthorizationURL(scopes?: string[]): Promise<URL> {
+	public async getAuthorizationURL(scopes?: string[]): Promise<AuthorizationRequest> {
 		const auth = requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const url = this.createAuthorizationURL(resolveScopes(scopes, auth, defaultScopes));
 		// The legacy URL builder does not take a state parameter.
 		url.searchParams.set("state", state);
-		await saveOAuthState(auth.store, state, {});
-		return url;
+		const payload = {};
+		await saveOAuthState(auth.store, state, payload);
+		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
 		const auth = requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		await consumeOAuthState(auth.store, state);
+		await resolveOAuthState(auth.store, state, saved);
 		const tokens = await this.validateAuthorizationCode(code);
 		const body = await fetchUserProfile(userEndpoint, tokens.accessToken());
 		const profile = body.data;
@@ -112,7 +121,8 @@ export class DonationAlerts {
 			name: profileString(user.name) ?? profileString(user.code),
 			email: profileString(user.email),
 			image: profileString(user.avatar),
-			raw: user
+			raw: user,
+			...extractOAuthTokens(tokens)
 		};
 	}
 }

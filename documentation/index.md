@@ -18,14 +18,14 @@ const store = kv(new Map());
 const github = new auth.GitHub({ store });
 
 // Where you start the login.
-const url = await github.getAuthorizationURL();
+const { url } = await github.getAuthorizationURL();
 
 // In your OAuth callback route.
 const user = await github.getUser(request.url);
 // { id: "1", name: "The Octocat", email: "octocat@github.com", image: "https://..." }
 ```
 
-`getAuthorizationURL()` generates the `state` and the PKCE verifier and keeps them in the store. `getUser()` validates the `state`, exchanges the code, fetches the profile, and returns the same `{ id, name, email, image }` shape for every provider.
+`getAuthorizationURL()` generates the `state` and the PKCE verifier, keeps them in the store, and returns them alongside the `url`. `getUser()` validates the `state`, exchanges the code, fetches the profile, and returns the same shape for every provider: `{ id, name, email, image, raw, accessToken, refreshToken, scopes }`.
 
 Credentials come from the environment when you do not pass them, so the example above reads `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`. See the [high level API](/documentation/high-level-api) for the full flow, and [providers](/documentation/providers) for what each one supports.
 

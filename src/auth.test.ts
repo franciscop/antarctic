@@ -106,16 +106,17 @@ vitest.test("saveOAuthState() and consumeOAuthState()", async () => {
 vitest.test("GitHub.getAuthorizationURL()", async () => {
 	const store = createMemoryStore();
 	const github = new GitHub({ clientId: "id", clientSecret: "secret", store });
-	const url = await github.getAuthorizationURL();
+	const { url, state, payload } = await github.getAuthorizationURL();
 	vitest.expect(url.origin).toBe("https://github.com");
 	vitest.expect(url.searchParams.get("client_id")).toBe("id");
 	vitest.expect(url.searchParams.get("scope")).toBe("read:user user:email");
-	const state = url.searchParams.get("state");
-	vitest.expect(state).not.toBe(null);
+	vitest.expect(url.searchParams.get("state")).toBe(state);
+	// GitHub does not use PKCE, so there is nothing to carry.
+	vitest.expect(payload).toStrictEqual({});
 	vitest.expect(store.data.has(`arctic:state:${state}`)).toBe(true);
 
 	const custom = await github.getAuthorizationURL(["repo"]);
-	vitest.expect(custom.searchParams.get("scope")).toBe("repo");
+	vitest.expect(custom.url.searchParams.get("scope")).toBe("repo");
 });
 
 vitest.test("GitHub high-level methods require the options constructor", async () => {
@@ -129,13 +130,13 @@ vitest.test("GitHub high-level methods require the options constructor", async (
 vitest.test("GitHub.getUser()", async () => {
 	const store = createMemoryStore();
 	const github = new GitHub({ clientId: "id", clientSecret: "secret", store });
-	const url = await github.getAuthorizationURL();
-	const state = url.searchParams.get("state") ?? "";
+	const { state } = await github.getAuthorizationURL();
 
+	let tokenResponse: Record<string, unknown> = { access_token: "token", token_type: "bearer" };
 	const fetchMock = vitest.vi.fn(async (input: Request | string | URL) => {
 		const requestURL = input instanceof Request ? input.url : input.toString();
 		if (requestURL.startsWith("https://github.com/login/oauth/access_token")) {
-			return Response.json({ access_token: "token", token_type: "bearer" });
+			return Response.json(tokenResponse);
 		}
 		if (requestURL.startsWith("https://api.github.com/user")) {
 			return Response.json({
@@ -165,12 +166,43 @@ vitest.test("GitHub.getUser()", async () => {
 				email: "octocat@github.com",
 				avatar_url: "https://avatars.githubusercontent.com/u/1",
 				company: "GitHub"
-			}
+			},
+			accessToken: "token",
+			// The provider returned neither, so these are null rather than throwing.
+			refreshToken: null,
+			scopes: null
 		});
 		vitest.expect(user.raw?.company).toBe("GitHub");
 		// The state is single use.
 		await vitest
 			.expect(github.getUser(`?code=abc&state=${state}`))
+			.rejects.toThrow(InvalidOAuthStateError);
+
+		// The caller can keep the state itself instead of using the store.
+		const second = await github.getAuthorizationURL();
+		const saved = { state: second.state, payload: second.payload };
+		// Nothing may be read back from the store on this path.
+		store.data.clear();
+		tokenResponse = {
+			access_token: "token",
+			token_type: "bearer",
+			refresh_token: "refresh",
+			scope: "read:user user:email"
+		};
+		const viaSaved = await github.getUser(`?code=abc&state=${second.state}`, saved);
+		vitest.expect(viaSaved.id).toBe("1");
+		vitest.expect(viaSaved.accessToken).toBe("token");
+		vitest.expect(viaSaved.refreshToken).toBe("refresh");
+		vitest.expect(viaSaved.scopes).toStrictEqual(["read:user", "user:email"]);
+
+		// A state the provider did not echo back is the CSRF failure.
+		await vitest
+			.expect(
+				github.getUser(`?code=abc&state=${second.state}`, {
+					state: "mismatch",
+					payload: saved.payload
+				})
+			)
 			.rejects.toThrow(InvalidOAuthStateError);
 	} finally {
 		vitest.vi.unstubAllGlobals();

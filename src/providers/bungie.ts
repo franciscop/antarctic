@@ -1,6 +1,6 @@
 import { OAuth2Client } from "../client.js";
 import {
-	consumeOAuthState,
+	extractOAuthTokens,
 	fetchUserProfile,
 	generateOAuthState,
 	OAuthConfigurationError,
@@ -10,13 +10,21 @@ import {
 	profileString,
 	requireAuthConfig,
 	resolveAuthConfig,
+	resolveOAuthState,
 	resolveProviderOption,
 	resolveScopes,
 	saveOAuthState
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
-import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
+import type {
+	AuthorizationRequest,
+	AuthConfig,
+	OAuthCallbackQuery,
+	OAuthUser,
+	ProviderOptions,
+	SavedOAuthState
+} from "../auth.js";
 
 const authorizationEndpoint = "https://www.bungie.net/en/oauth/authorize";
 const tokenEndpoint = "https://www.bungie.net/platform/app/oauth/token";
@@ -70,15 +78,16 @@ export class Bungie {
 		return tokens;
 	}
 
-	public async getAuthorizationURL(scopes?: string[]): Promise<URL> {
+	public async getAuthorizationURL(scopes?: string[]): Promise<AuthorizationRequest> {
 		const auth = requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const url = this.createAuthorizationURL(state, resolveScopes(scopes, auth, defaultScopes));
-		await saveOAuthState(auth.store, state, {});
-		return url;
+		const payload = {};
+		await saveOAuthState(auth.store, state, payload);
+		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
 		const auth = requireAuthConfig(this.auth);
 		if (this.apiKey === null) {
 			throw new OAuthConfigurationError(
@@ -86,7 +95,7 @@ export class Bungie {
 			);
 		}
 		const { code, state } = parseCallbackQuery(query);
-		await consumeOAuthState(auth.store, state);
+		await resolveOAuthState(auth.store, state, saved);
 		const tokens = await this.validateAuthorizationCode(code);
 		const body = await fetchUserProfile(userEndpoint, tokens.accessToken(), {
 			"X-API-Key": this.apiKey
@@ -108,7 +117,8 @@ export class Bungie {
 			name: profileString(user.cachedBungieGlobalDisplayName) ?? profileString(user.displayName),
 			email: null,
 			image,
-			raw: user
+			raw: user,
+			...extractOAuthTokens(tokens)
 		};
 	}
 }

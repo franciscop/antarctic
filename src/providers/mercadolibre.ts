@@ -1,7 +1,7 @@
 import { createS256CodeChallenge } from "../oauth2.js";
 import { createOAuth2Request, sendTokenRequest } from "../request.js";
 import {
-	consumeOAuthState,
+	extractOAuthTokens,
 	fetchUserProfile,
 	generateOAuthCodeVerifier,
 	generateOAuthState,
@@ -11,11 +11,19 @@ import {
 	profileString,
 	requireAuthConfig,
 	resolveAuthConfig,
+	resolveOAuthState,
 	saveOAuthState
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
-import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
+import type {
+	AuthorizationRequest,
+	AuthConfig,
+	OAuthCallbackQuery,
+	OAuthUser,
+	ProviderOptions,
+	SavedOAuthState
+} from "../auth.js";
 
 const authorizationEndpoint = "https://auth.mercadolibre.com/authorization";
 const tokenEndpoint = "https://api.mercadolibre.com/oauth/token";
@@ -95,19 +103,20 @@ export class MercadoLibre {
 	}
 
 	// Scopes are defined in the application settings, so the argument is ignored.
-	public async getAuthorizationURL(_scopes?: string[]): Promise<URL> {
+	public async getAuthorizationURL(_scopes?: string[]): Promise<AuthorizationRequest> {
 		const auth = requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const codeVerifier = generateOAuthCodeVerifier();
 		const url = await this.createAuthorizationURL(state, codeVerifier);
-		await saveOAuthState(auth.store, state, { codeVerifier });
-		return url;
+		const payload = { codeVerifier };
+		await saveOAuthState(auth.store, state, payload);
+		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
 		const auth = requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		const stored = await consumeOAuthState(auth.store, state);
+		const stored = await resolveOAuthState(auth.store, state, saved);
 		if (typeof stored.codeVerifier !== "string") {
 			throw new InvalidOAuthCallbackError("Missing PKCE code verifier for OAuth state");
 		}
@@ -125,7 +134,8 @@ export class MercadoLibre {
 			name: fullName !== "" ? fullName : profileString(profile.nickname),
 			email: profileString(profile.email),
 			image,
-			raw: profile
+			raw: profile,
+			...extractOAuthTokens(tokens)
 		};
 	}
 }

@@ -1,7 +1,7 @@
 import { OAuth2Client, CodeChallengeMethod } from "../client.js";
 import { joinURIAndPath } from "../request.js";
 import {
-	consumeOAuthState,
+	extractOAuthTokens,
 	fetchUserProfile,
 	generateOAuthCodeVerifier,
 	generateOAuthState,
@@ -12,12 +12,20 @@ import {
 	requireAuthConfig,
 	requireProviderOption,
 	resolveAuthConfig,
+	resolveOAuthState,
 	resolveScopes,
 	saveOAuthState
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
-import type { AuthConfig, OAuthCallbackQuery, OAuthUser, ProviderOptions } from "../auth.js";
+import type {
+	AuthorizationRequest,
+	AuthConfig,
+	OAuthCallbackQuery,
+	OAuthUser,
+	ProviderOptions,
+	SavedOAuthState
+} from "../auth.js";
 
 const envPrefix = "MASTODON";
 const defaultScopes = ["read:accounts"];
@@ -96,7 +104,7 @@ export class Mastodon {
 		await this.client.revokeToken(this.tokenRevocationEndpoint, token);
 	}
 
-	public async getAuthorizationURL(scopes?: string[]): Promise<URL> {
+	public async getAuthorizationURL(scopes?: string[]): Promise<AuthorizationRequest> {
 		const auth = requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const codeVerifier = generateOAuthCodeVerifier();
@@ -105,14 +113,15 @@ export class Mastodon {
 			codeVerifier,
 			resolveScopes(scopes, auth, defaultScopes)
 		);
-		await saveOAuthState(auth.store, state, { codeVerifier });
-		return url;
+		const payload = { codeVerifier };
+		await saveOAuthState(auth.store, state, payload);
+		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery): Promise<OAuthUser> {
+	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
 		const auth = requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		const stored = await consumeOAuthState(auth.store, state);
+		const stored = await resolveOAuthState(auth.store, state, saved);
 		if (typeof stored.codeVerifier !== "string") {
 			throw new InvalidOAuthCallbackError("Missing PKCE code verifier for OAuth state");
 		}
@@ -123,7 +132,8 @@ export class Mastodon {
 			name: profileString(profile.display_name) ?? profileString(profile.username),
 			email: null,
 			image: profileString(profile.avatar),
-			raw: profile
+			raw: profile,
+			...extractOAuthTokens(tokens)
 		};
 	}
 }
