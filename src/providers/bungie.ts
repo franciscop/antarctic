@@ -12,8 +12,7 @@ import {
 	resolveAuthConfig,
 	resolveOAuthState,
 	resolveProviderOption,
-	resolveScopes,
-	saveOAuthState
+	resolveScopes
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
@@ -43,10 +42,10 @@ export class Bungie {
 	private apiKey: string | null = null;
 	private auth: AuthConfig | null = null;
 
-	constructor(options: BungieOptions);
+	constructor(options?: BungieOptions);
 	constructor(clientId: string, clientSecret: string | null, redirectURI: string);
 	constructor(
-		clientIdOrOptions: string | BungieOptions,
+		clientIdOrOptions: string | BungieOptions = {},
 		clientSecret?: string | null,
 		redirectURI?: string
 	) {
@@ -83,19 +82,18 @@ export class Bungie {
 		const state = generateOAuthState();
 		const url = this.createAuthorizationURL(state, resolveScopes(scopes, auth, defaultScopes));
 		const payload = {};
-		await saveOAuthState(auth.store, state, payload);
 		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
-		const auth = requireAuthConfig(this.auth);
+	public async getUser(query: OAuthCallbackQuery, saved: SavedOAuthState): Promise<OAuthUser> {
+		requireAuthConfig(this.auth);
 		if (this.apiKey === null) {
 			throw new OAuthConfigurationError(
 				"Missing 'apiKey': pass it in the constructor options or set BUNGIE_API_KEY"
 			);
 		}
 		const { code, state } = parseCallbackQuery(query);
-		await resolveOAuthState(auth.store, state, saved);
+		resolveOAuthState(state, saved);
 		const tokens = await this.validateAuthorizationCode(code);
 		const body = await fetchUserProfile(userEndpoint, tokens.accessToken(), {
 			"X-API-Key": this.apiKey

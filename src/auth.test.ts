@@ -1,32 +1,15 @@
 import * as vitest from "vitest";
 
 import {
-	consumeOAuthState,
 	InvalidOAuthCallbackError,
 	InvalidOAuthStateError,
 	OAuthConfigurationError,
 	OAuthProviderError,
 	parseCallbackQuery,
 	resolveAuthConfig,
-	saveOAuthState
+	resolveOAuthState
 } from "./auth.js";
 import { GitHub } from "./providers/github.js";
-
-import type { OAuthStateStore } from "./auth.js";
-
-function createMemoryStore(): OAuthStateStore & { data: Map<string, unknown> } {
-	const data = new Map<string, unknown>();
-	return {
-		data,
-		get: async (key) => data.get(key) ?? null,
-		set: async (key, value): Promise<void> => {
-			data.set(key, value);
-		},
-		del: async (key): Promise<void> => {
-			data.delete(key);
-		}
-	};
-}
 
 vitest.test("parseCallbackQuery()", () => {
 	const expected = { code: "abc", state: "xyz" };
@@ -53,10 +36,9 @@ vitest.test("parseCallbackQuery()", () => {
 });
 
 vitest.test("resolveAuthConfig()", () => {
-	const store = createMemoryStore();
 	const config = resolveAuthConfig(
 		"AUTHTEST",
-		{ clientId: "id", clientSecret: "secret", scopes: ["a", "b"], store },
+		{ clientId: "id", clientSecret: "secret", scopes: ["a", "b"] },
 		{ clientSecret: true }
 	);
 	vitest.expect(config.clientId).toBe("id");
@@ -65,7 +47,7 @@ vitest.test("resolveAuthConfig()", () => {
 	vitest.expect(config.scopes).toStrictEqual(["a", "b"]);
 
 	vitest
-		.expect(() => resolveAuthConfig("AUTHTEST", { store }, { clientSecret: true }))
+		.expect(() => resolveAuthConfig("AUTHTEST", {}, { clientSecret: true }))
 		.toThrow(OAuthConfigurationError);
 
 	process.env.AUTHTEST_CLIENT_ID = "env-id";
@@ -73,7 +55,7 @@ vitest.test("resolveAuthConfig()", () => {
 	process.env.AUTHTEST_REDIRECT_URI = "https://example.com/callback";
 	process.env.AUTHTEST_SCOPES = "read:user, user:email";
 	try {
-		const fromEnv = resolveAuthConfig("AUTHTEST", { store }, { clientSecret: true });
+		const fromEnv = resolveAuthConfig("AUTHTEST", {}, { clientSecret: true });
 		vitest.expect(fromEnv.clientId).toBe("env-id");
 		vitest.expect(fromEnv.clientSecret).toBe("env-secret");
 		vitest.expect(fromEnv.redirectURI).toBe("https://example.com/callback");
@@ -81,7 +63,7 @@ vitest.test("resolveAuthConfig()", () => {
 
 		const explicitWins = resolveAuthConfig(
 			"AUTHTEST",
-			{ clientId: "id", scopes: [], store },
+			{ clientId: "id", scopes: [] },
 			{ clientSecret: true }
 		);
 		vitest.expect(explicitWins.clientId).toBe("id");
@@ -94,18 +76,15 @@ vitest.test("resolveAuthConfig()", () => {
 	}
 });
 
-vitest.test("saveOAuthState() and consumeOAuthState()", async () => {
-	const store = createMemoryStore();
-	await saveOAuthState(store, "state123", { codeVerifier: "verifier" });
-	const payload = await consumeOAuthState(store, "state123");
-	vitest.expect(payload).toStrictEqual({ codeVerifier: "verifier" });
-	await vitest.expect(consumeOAuthState(store, "state123")).rejects.toThrow(InvalidOAuthStateError);
-	await vitest.expect(consumeOAuthState(store, "unknown")).rejects.toThrow(InvalidOAuthStateError);
+vitest.test("resolveOAuthState()", () => {
+	const saved = { state: "state123", payload: { codeVerifier: "verifier" } };
+	vitest.expect(resolveOAuthState("state123", saved)).toStrictEqual({ codeVerifier: "verifier" });
+	vitest.expect(resolveOAuthState("state123", { state: "state123" })).toStrictEqual({});
+	vitest.expect(() => resolveOAuthState("other", saved)).toThrow(InvalidOAuthStateError);
 });
 
 vitest.test("GitHub.getAuthorizationURL()", async () => {
-	const store = createMemoryStore();
-	const github = new GitHub({ clientId: "id", clientSecret: "secret", store });
+	const github = new GitHub({ clientId: "id", clientSecret: "secret" });
 	const { url, state, payload } = await github.getAuthorizationURL();
 	vitest.expect(url.origin).toBe("https://github.com");
 	vitest.expect(url.searchParams.get("client_id")).toBe("id");
@@ -113,7 +92,6 @@ vitest.test("GitHub.getAuthorizationURL()", async () => {
 	vitest.expect(url.searchParams.get("state")).toBe(state);
 	// GitHub does not use PKCE, so there is nothing to carry.
 	vitest.expect(payload).toStrictEqual({});
-	vitest.expect(store.data.has(`arctic:state:${state}`)).toBe(true);
 
 	const custom = await github.getAuthorizationURL(["repo"]);
 	vitest.expect(custom.url.searchParams.get("scope")).toBe("repo");
@@ -123,14 +101,13 @@ vitest.test("GitHub high-level methods require the options constructor", async (
 	const github = new GitHub("id", "secret", null);
 	await vitest.expect(github.getAuthorizationURL()).rejects.toThrow(OAuthConfigurationError);
 	await vitest
-		.expect(github.getUser("?code=abc&state=xyz"))
+		.expect(github.getUser("?code=abc&state=xyz", { state: "xyz" }))
 		.rejects.toThrow(OAuthConfigurationError);
 });
 
 vitest.test("GitHub.getUser()", async () => {
-	const store = createMemoryStore();
-	const github = new GitHub({ clientId: "id", clientSecret: "secret", store });
-	const { state } = await github.getAuthorizationURL();
+	const github = new GitHub({ clientId: "id", clientSecret: "secret" });
+	const { state, payload } = await github.getAuthorizationURL();
 
 	let tokenResponse: Record<string, unknown> = { access_token: "token", token_type: "bearer" };
 	const fetchMock = vitest.vi.fn(async (input: Request | string | URL) => {
@@ -152,7 +129,7 @@ vitest.test("GitHub.getUser()", async () => {
 	});
 	vitest.vi.stubGlobal("fetch", fetchMock);
 	try {
-		const user = await github.getUser(`?code=abc&state=${state}`);
+		const user = await github.getUser(`?code=abc&state=${state}`, { state, payload });
 		vitest.expect(user).toStrictEqual({
 			id: "1",
 			name: "The Octocat",
@@ -173,16 +150,9 @@ vitest.test("GitHub.getUser()", async () => {
 			scopes: null
 		});
 		vitest.expect(user.raw?.company).toBe("GitHub");
-		// The state is single use.
-		await vitest
-			.expect(github.getUser(`?code=abc&state=${state}`))
-			.rejects.toThrow(InvalidOAuthStateError);
 
-		// The caller can keep the state itself instead of using the store.
 		const second = await github.getAuthorizationURL();
 		const saved = { state: second.state, payload: second.payload };
-		// Nothing may be read back from the store on this path.
-		store.data.clear();
 		tokenResponse = {
 			access_token: "token",
 			token_type: "bearer",

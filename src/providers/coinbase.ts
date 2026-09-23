@@ -10,8 +10,7 @@ import {
 	requireAuthConfig,
 	resolveAuthConfig,
 	resolveOAuthState,
-	resolveScopes,
-	saveOAuthState
+	resolveScopes
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
@@ -40,10 +39,10 @@ export class Coinbase {
 	private redirectURI: string;
 	private auth: AuthConfig | null = null;
 
-	constructor(options: CoinbaseOptions);
+	constructor(options?: CoinbaseOptions);
 	constructor(clientId: string, clientSecret: string, redirectURI: string);
 	constructor(
-		clientIdOrOptions: string | CoinbaseOptions,
+		clientIdOrOptions: string | CoinbaseOptions = {},
 		clientSecret?: string,
 		redirectURI?: string
 	) {
@@ -111,14 +110,13 @@ export class Coinbase {
 		const state = generateOAuthState();
 		const url = this.createAuthorizationURL(state, resolveScopes(scopes, auth, defaultScopes));
 		const payload = {};
-		await saveOAuthState(auth.store, state, payload);
 		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
-		const auth = requireAuthConfig(this.auth);
+	public async getUser(query: OAuthCallbackQuery, saved: SavedOAuthState): Promise<OAuthUser> {
+		requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		await resolveOAuthState(auth.store, state, saved);
+		resolveOAuthState(state, saved);
 		const tokens = await this.validateAuthorizationCode(code);
 		const body = await fetchUserProfile(userEndpoint, tokens.accessToken());
 		const profile = body.data;

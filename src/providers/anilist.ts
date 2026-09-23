@@ -8,8 +8,7 @@ import {
 	profileString,
 	requireAuthConfig,
 	resolveAuthConfig,
-	resolveOAuthState,
-	saveOAuthState
+	resolveOAuthState
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
@@ -34,10 +33,10 @@ export class AniList {
 	private client: OAuth2Client;
 	private auth: AuthConfig | null = null;
 
-	constructor(options: AniListOptions);
+	constructor(options?: AniListOptions);
 	constructor(clientId: string, clientSecret: string, redirectURI: string);
 	constructor(
-		clientIdOrOptions: string | AniListOptions,
+		clientIdOrOptions: string | AniListOptions = {},
 		clientSecret?: string,
 		redirectURI?: string
 	) {
@@ -67,18 +66,17 @@ export class AniList {
 	}
 
 	public async getAuthorizationURL(): Promise<AuthorizationRequest> {
-		const auth = requireAuthConfig(this.auth);
+		requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const url = this.createAuthorizationURL(state);
 		const payload = {};
-		await saveOAuthState(auth.store, state, payload);
 		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
-		const auth = requireAuthConfig(this.auth);
+	public async getUser(query: OAuthCallbackQuery, saved: SavedOAuthState): Promise<OAuthUser> {
+		requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		await resolveOAuthState(auth.store, state, saved);
+		resolveOAuthState(state, saved);
 		const tokens = await this.validateAuthorizationCode(code);
 		const viewer = await fetchViewer(tokens.accessToken());
 		let image: string | null = null;

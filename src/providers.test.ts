@@ -3,22 +3,6 @@ import * as vitest from "vitest";
 import * as arctic from "./index.js";
 import { OAuthConfigurationError } from "./auth.js";
 
-import type { OAuthStateStore } from "./auth.js";
-
-function createMemoryStore(): OAuthStateStore & { data: Map<string, unknown> } {
-	const data = new Map<string, unknown>();
-	return {
-		data,
-		get: async (key) => data.get(key) ?? null,
-		set: async (key, value): Promise<void> => {
-			data.set(key, value);
-		},
-		del: async (key): Promise<void> => {
-			data.delete(key);
-		}
-	};
-}
-
 const providerNames = Object.keys(arctic).filter((name) => {
 	const value = (arctic as Record<string, unknown>)[name];
 	return typeof value === "function" && /^[A-Z]/.test(name) && !name.endsWith("Error");
@@ -63,20 +47,31 @@ vitest.test("providers preserve the low-level API", async () => {
 });
 
 vitest.test("missing configuration throws OAuthConfigurationError", () => {
-	const store = createMemoryStore();
-	vitest.expect(() => new arctic.GitHub({ store })).toThrow(OAuthConfigurationError);
-	vitest
-		.expect(() => new arctic.Google({ clientId: "id", store }))
-		.toThrow(OAuthConfigurationError);
+	vitest.expect(() => new arctic.GitHub()).toThrow(OAuthConfigurationError);
+	vitest.expect(() => new arctic.GitHub({})).toThrow(OAuthConfigurationError);
+	vitest.expect(() => new arctic.Google({ clientId: "id" })).toThrow(OAuthConfigurationError);
 });
 
+vitest.test(
+	"the options object can be omitted when the environment has the credentials",
+	async () => {
+		process.env.GITHUB_CLIENT_ID = "env-id";
+		process.env.GITHUB_CLIENT_SECRET = "env-secret";
+		try {
+			const { url } = await new arctic.GitHub().getAuthorizationURL();
+			vitest.expect(url.searchParams.get("client_id")).toBe("env-id");
+		} finally {
+			delete process.env.GITHUB_CLIENT_ID;
+			delete process.env.GITHUB_CLIENT_SECRET;
+		}
+	}
+);
+
 vitest.test("Google.getUser() uses PKCE and the ID token", async () => {
-	const store = createMemoryStore();
 	const google = new arctic.Google({
 		clientId: "id",
 		clientSecret: "secret",
-		redirectURI: "https://example.com/callback",
-		store
+		redirectURI: "https://example.com/callback"
 	});
 
 	const { url, state, payload } = await google.getAuthorizationURL();
@@ -84,9 +79,7 @@ vitest.test("Google.getUser() uses PKCE and the ID token", async () => {
 	vitest.expect(url.searchParams.get("scope")).toBe("openid profile email");
 
 	// PKCE providers hand the verifier back so the caller can persist it.
-	const stored = store.data.get(`arctic:state:${state}`) as { codeVerifier?: string };
-	vitest.expect(typeof stored.codeVerifier).toBe("string");
-	vitest.expect(payload.codeVerifier).toBe(stored.codeVerifier);
+	vitest.expect(typeof payload.codeVerifier).toBe("string");
 
 	// A JWT with the claims Google returns; the signature is never verified here.
 	const claims = {
@@ -112,7 +105,7 @@ vitest.test("Google.getUser() uses PKCE and the ID token", async () => {
 	});
 	vitest.vi.stubGlobal("fetch", fetchMock);
 	try {
-		const user = await google.getUser({ code: "abc", state });
+		const user = await google.getUser({ code: "abc", state }, { state, payload });
 		vitest.expect(user).toStrictEqual({
 			id: "12345",
 			name: "Ada Lovelace",
@@ -125,8 +118,7 @@ vitest.test("Google.getUser() uses PKCE and the ID token", async () => {
 			scopes: ["openid", "profile", "email"]
 		});
 		vitest.expect(user.raw?.hd).toBe("example.com");
-		vitest.expect(sentBody).toContain(`code_verifier=${stored.codeVerifier}`);
-		vitest.expect(store.data.size).toBe(0);
+		vitest.expect(sentBody).toContain(`code_verifier=${payload.codeVerifier}`);
 	} finally {
 		vitest.vi.unstubAllGlobals();
 	}
@@ -158,7 +150,7 @@ vitest.test("every provider's getUser() returns raw and the tokens", async () =>
 			.toContain("...extractOAuthTokens(tokens)");
 		vitest
 			.expect(source, `${file} does not accept saved state`)
-			.toContain("saved?: SavedOAuthState");
+			.toContain("saved: SavedOAuthState");
 		vitest
 			.expect(source, `${file} does not return the state and payload`)
 			.toContain("return { url, state, payload };");

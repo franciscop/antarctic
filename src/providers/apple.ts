@@ -12,8 +12,7 @@ import {
 	requireProviderOption,
 	resolveAuthConfig,
 	resolveOAuthState,
-	resolveScopes,
-	saveOAuthState
+	resolveScopes
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
@@ -112,14 +111,13 @@ export class Apple {
 			url.searchParams.set("response_mode", "form_post");
 		}
 		const payload = {};
-		await saveOAuthState(auth.store, state, payload);
 		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
-		const auth = requireAuthConfig(this.auth);
+	public async getUser(query: OAuthCallbackQuery, saved: SavedOAuthState): Promise<OAuthUser> {
+		requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		await resolveOAuthState(auth.store, state, saved);
+		resolveOAuthState(state, saved);
 		const tokens = await this.validateAuthorizationCode(code);
 		const claims = decodeIdToken(tokens.idToken()) as Record<string, unknown>;
 		return {

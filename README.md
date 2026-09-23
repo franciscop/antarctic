@@ -10,38 +10,25 @@ npm install antarctic
 
 ## High-level API
 
-Construct a provider with an options object and get two methods that handle the whole flow: `getAuthorizationURL()` and `getUser()`. State and PKCE values are generated for you and kept in a [polystore](https://polystore.dev) compatible key-value store.
+Construct a provider with an options object and get two methods that handle the whole flow: `getAuthorizationURL()` and `getUser()`. State and PKCE values are generated for you, and you keep them between the two steps, for example in a signed cookie.
 
 ```ts
 import * as auth from "antarctic";
-import kv from "polystore";
 
-const store = kv(new Map());
 const scopes = ["read:user", "user:email"];
+const github = new auth.GitHub({ scopes });
 
-const github = new auth.GitHub({ store, scopes });
+// Redirect the user here to sign in, keeping state and payload in a cookie.
+const { url, state, payload } = await github.getAuthorizationURL();
 
-// Redirect the user here to sign in.
-const { url } = await github.getAuthorizationURL();
-
-// In the OAuth callback route:
-const user = await github.getUser(request.url);
+// In the OAuth callback route, with the state and payload read back:
+const user = await github.getUser(request.url, { state, payload });
 // { id: "1", name: "The Octocat", email: "octocat@github.com", image: "https://..." }
 ```
 
-`getAuthorizationURL()` returns `{ url, state, payload }`. The state and payload are already in the store, so you only need `url` unless you would rather persist them yourself.
+`getUser()` accepts the callback query as a full URL, a query string, a `URLSearchParams`, or a plain object. It checks the `state` against the one you kept, exchanges the code (with PKCE where the provider supports it), fetches the profile, and returns the user along with the tokens: `{ id, name, email, image, raw, accessToken, refreshToken, scopes }`.
 
-`getUser()` accepts the callback query as a full URL, a query string, a `URLSearchParams`, or a plain object. It validates the `state`, exchanges the code (with PKCE where the provider supports it), fetches the profile, deletes the consumed state, and returns the user along with the tokens: `{ id, name, email, image, raw, accessToken, refreshToken, scopes }`.
-
-Pass the state back as a second argument to skip the store entirely, for example when you keep it in a signed cookie:
-
-```ts
-const { url, state, payload } = await github.getAuthorizationURL();
-// ...later, in the callback route
-const user = await github.getUser(request.url, { state, payload });
-```
-
-Options resolve as `explicit > environment > provider default`. Every option except `store` can come from the environment, named after the provider:
+Options resolve as `explicit > environment > provider default`. Every option can come from the environment, named after the provider:
 
 ```
 GITHUB_CLIENT_ID
@@ -85,6 +72,61 @@ const accessToken = tokens.accessToken();
 ```
 
 > Antarctic only supports providers that follow the OAuth 2.0 spec (including PKCE and token revocation).
+
+## Compare to Arctic
+
+Arctic gives you the OAuth primitives and leaves the flow to you: generating the state and PKCE verifier, checking the callback, and fetching and mapping the profile for each provider. Antarctic does all of that in two calls and returns the same user shape for every provider. Here is Google, which uses PKCE, in Arctic:
+
+```ts
+import * as arctic from "arctic";
+// import * as arctic from "antarctic"; // Exactly the same for the low-level API
+
+const google = new arctic.Google(clientId, clientSecret, redirectURI);
+
+// Login route
+const state = arctic.generateState();
+const codeVerifier = arctic.generateCodeVerifier();
+const scopes = ["openid", "profile", "email"];
+const url = await google.createAuthorizationURL(state, codeVerifier, scopes);
+setCookie("state", state, { httpOnly: true, maxAge: 600 });
+setCookie("code_verifier", codeVerifier, { httpOnly: true, maxAge: 600 });
+return Response.redirect(url);
+
+// Callback route
+const params = new URL(request.url).searchParams;
+const code = params.get("code");
+if (code === null || params.get("state") !== getCookie("state")) {
+	throw new Error("Invalid request");
+}
+const tokens = await google.validateAuthorizationCode(code, getCookie("code_verifier"));
+const claims = arctic.decodeIdToken(tokens.idToken());
+// Map the claims to your own user shape, or fetch the profile for non-OIDC providers
+```
+
+And in Antarctic:
+
+```ts
+import * as auth from "antarctic";
+
+const google = new auth.Google();
+
+// Login route
+const { url, state, payload } = await google.getAuthorizationURL();
+setCookie("oauth", JSON.stringify({ state, payload }), { httpOnly: true, maxAge: 600 });
+return Response.redirect(url);
+
+// Callback route
+const user = await google.getUser(request.url, JSON.parse(getCookie("oauth")));
+// { id, name, email, image, raw, accessToken, refreshToken, scopes }
+```
+
+|                               | Arctic                | Antarctic                         |
+| ----------------------------- | --------------------- | --------------------------------- |
+| Credentials                   | Positional arguments  | Environment or options            |
+| State and PKCE verifier       | You generate them     | Generated for you                 |
+| Scopes                        | You pass them         | Per-provider default, overridable |
+| Callback query and CSRF check | You parse and compare | Done in `getUser()`               |
+| User profile                  | You fetch and map it  | Normalized user with the tokens   |
 
 ## Credits
 

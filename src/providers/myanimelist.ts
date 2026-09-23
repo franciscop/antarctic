@@ -10,8 +10,7 @@ import {
 	profileString,
 	requireAuthConfig,
 	resolveAuthConfig,
-	resolveOAuthState,
-	saveOAuthState
+	resolveOAuthState
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
@@ -36,10 +35,10 @@ export class MyAnimeList {
 	private client;
 	private auth: AuthConfig | null = null;
 
-	constructor(options: MyAnimeListOptions);
+	constructor(options?: MyAnimeListOptions);
 	constructor(clientId: string, clientSecret: string, redirectURI: string | null);
 	constructor(
-		clientIdOrOptions: string | MyAnimeListOptions,
+		clientIdOrOptions: string | MyAnimeListOptions = {},
 		clientSecret?: string,
 		redirectURI?: string | null
 	) {
@@ -81,19 +80,18 @@ export class MyAnimeList {
 
 	// MyAnimeList does not use scopes, so the argument is ignored.
 	public async getAuthorizationURL(_scopes?: string[]): Promise<AuthorizationRequest> {
-		const auth = requireAuthConfig(this.auth);
+		requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const codeVerifier = generateOAuthCodeVerifier();
 		const url = await this.createAuthorizationURL(state, codeVerifier);
 		const payload = { codeVerifier };
-		await saveOAuthState(auth.store, state, payload);
 		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
-		const auth = requireAuthConfig(this.auth);
+	public async getUser(query: OAuthCallbackQuery, saved: SavedOAuthState): Promise<OAuthUser> {
+		requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		const stored = await resolveOAuthState(auth.store, state, saved);
+		const stored = resolveOAuthState(state, saved);
 		if (typeof stored.codeVerifier !== "string") {
 			throw new InvalidOAuthCallbackError("Missing PKCE code verifier for OAuth state");
 		}

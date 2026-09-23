@@ -9,8 +9,7 @@ import {
 	profileString,
 	requireAuthConfig,
 	resolveAuthConfig,
-	resolveOAuthState,
-	saveOAuthState
+	resolveOAuthState
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
@@ -37,10 +36,10 @@ export class Naver {
 	private redirectURI: string;
 	private auth: AuthConfig | null = null;
 
-	constructor(options: NaverOptions);
+	constructor(options?: NaverOptions);
 	constructor(clientId: string, clientSecret: string, redirectURI: string);
 	constructor(
-		clientIdOrOptions: string | NaverOptions,
+		clientIdOrOptions: string | NaverOptions = {},
 		clientSecret?: string,
 		redirectURI?: string
 	) {
@@ -92,19 +91,18 @@ export class Naver {
 
 	// Naver scopes are configured in the application settings, so the argument is ignored.
 	public async getAuthorizationURL(_scopes?: string[]): Promise<AuthorizationRequest> {
-		const auth = requireAuthConfig(this.auth);
+		requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const url = this.createAuthorizationURL();
 		url.searchParams.set("state", state);
 		const payload = {};
-		await saveOAuthState(auth.store, state, payload);
 		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
-		const auth = requireAuthConfig(this.auth);
+	public async getUser(query: OAuthCallbackQuery, saved: SavedOAuthState): Promise<OAuthUser> {
+		requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		await resolveOAuthState(auth.store, state, saved);
+		resolveOAuthState(state, saved);
 		const tokens = await this.validateAuthorizationCode(code);
 		const profile = await fetchUserProfile(userEndpoint, tokens.accessToken());
 		const response = profile.response;

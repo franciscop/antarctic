@@ -11,8 +11,7 @@ import {
 	requireAuthConfig,
 	resolveAuthConfig,
 	resolveOAuthState,
-	resolveScopes,
-	saveOAuthState
+	resolveScopes
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
@@ -39,10 +38,10 @@ export class Zoom {
 	private client: OAuth2Client;
 	private auth: AuthConfig | null = null;
 
-	constructor(options: ZoomOptions);
+	constructor(options?: ZoomOptions);
 	constructor(clientId: string, clientSecret: string, redirectURI: string);
 	constructor(
-		clientIdOrOptions: string | ZoomOptions,
+		clientIdOrOptions: string | ZoomOptions = {},
 		clientSecret?: string,
 		redirectURI?: string
 	) {
@@ -103,14 +102,13 @@ export class Zoom {
 			resolveScopes(scopes, auth, defaultScopes)
 		);
 		const payload = { codeVerifier };
-		await saveOAuthState(auth.store, state, payload);
 		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
-		const auth = requireAuthConfig(this.auth);
+	public async getUser(query: OAuthCallbackQuery, saved: SavedOAuthState): Promise<OAuthUser> {
+		requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		const stored = await resolveOAuthState(auth.store, state, saved);
+		const stored = resolveOAuthState(state, saved);
 		if (typeof stored.codeVerifier !== "string") {
 			throw new InvalidOAuthCallbackError("Missing PKCE code verifier for OAuth state");
 		}

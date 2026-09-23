@@ -8,11 +8,10 @@ interface ProviderOptions {
 	clientSecret?: string;
 	redirectURI?: string;
 	scopes?: string[];
-	store: Store;
 }
 ```
 
-`store` is any [polystore](https://polystore.dev) compatible key-value store. Everything else falls back to the environment and then to the provider default. Providers that need extra values, such as Auth0's `domain`, add them to their own options interface.
+Every option falls back to the environment and then to the provider default. Providers that need extra values, such as Auth0's `domain`, add them to their own options interface.
 
 ## OAuthUser
 
@@ -49,7 +48,7 @@ interface AuthorizationRequest {
 }
 ```
 
-`payload` holds the PKCE verifier where the provider uses one, and is empty otherwise. Both `state` and `payload` are written to the store, and can be passed back to `getUser()` as `{ state, payload }` to skip it.
+`payload` holds the PKCE verifier where the provider uses one, and is empty otherwise. Keep both until the callback and pass them to `getUser()` as `{ state, payload }`.
 
 ## OAuthConfigurationError
 
@@ -57,11 +56,11 @@ Thrown when a required option is missing, or when `getAuthorizationURL()` or `ge
 
 ## InvalidOAuthCallbackError
 
-Thrown when the callback query has no `code` or `state`, or when the stored PKCE verifier is missing.
+Thrown when the callback query has no `code` or `state`, or when the saved `payload` has no PKCE verifier for a provider that needs one.
 
 ## InvalidOAuthStateError
 
-Thrown when the `state` is unknown, expired, or already consumed.
+Thrown when the saved `state` does not match the one in the callback query.
 
 ## OAuthProviderError
 

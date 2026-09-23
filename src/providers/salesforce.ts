@@ -13,8 +13,7 @@ import {
 	requireProviderOption,
 	resolveAuthConfig,
 	resolveOAuthState,
-	resolveScopes,
-	saveOAuthState
+	resolveScopes
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
@@ -43,10 +42,10 @@ export class Salesforce {
 	private client: OAuth2Client;
 	private auth: AuthConfig | null = null;
 
-	constructor(options: SalesforceOptions);
+	constructor(options?: SalesforceOptions);
 	constructor(domain: string, clientId: string, clientSecret: string | null, redirectURI: string);
 	constructor(
-		domainOrOptions: string | SalesforceOptions,
+		domainOrOptions: string | SalesforceOptions = {},
 		clientId?: string,
 		clientSecret?: string | null,
 		redirectURI?: string
@@ -116,14 +115,13 @@ export class Salesforce {
 			resolveScopes(scopes, auth, defaultScopes)
 		);
 		const payload = { codeVerifier };
-		await saveOAuthState(auth.store, state, payload);
 		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
-		const auth = requireAuthConfig(this.auth);
+	public async getUser(query: OAuthCallbackQuery, saved: SavedOAuthState): Promise<OAuthUser> {
+		requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		const stored = await resolveOAuthState(auth.store, state, saved);
+		const stored = resolveOAuthState(state, saved);
 		if (typeof stored.codeVerifier !== "string") {
 			throw new InvalidOAuthCallbackError("Missing PKCE code verifier for OAuth state");
 		}

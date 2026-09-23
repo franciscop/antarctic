@@ -8,8 +8,7 @@ import {
 	profileString,
 	requireAuthConfig,
 	resolveAuthConfig,
-	resolveOAuthState,
-	saveOAuthState
+	resolveOAuthState
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
@@ -33,10 +32,10 @@ export class Notion {
 	private client: OAuth2Client;
 	private auth: AuthConfig | null = null;
 
-	constructor(options: NotionOptions);
+	constructor(options?: NotionOptions);
 	constructor(clientId: string, clientSecret: string, redirectURI: string);
 	constructor(
-		clientIdOrOptions: string | NotionOptions,
+		clientIdOrOptions: string | NotionOptions = {},
 		clientSecret?: string,
 		redirectURI?: string
 	) {
@@ -68,18 +67,17 @@ export class Notion {
 
 	// Notion does not use scopes, so the argument is ignored.
 	public async getAuthorizationURL(_scopes?: string[]): Promise<AuthorizationRequest> {
-		const auth = requireAuthConfig(this.auth);
+		requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const url = this.createAuthorizationURL(state);
 		const payload = {};
-		await saveOAuthState(auth.store, state, payload);
 		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
-		const auth = requireAuthConfig(this.auth);
+	public async getUser(query: OAuthCallbackQuery, saved: SavedOAuthState): Promise<OAuthUser> {
+		requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		await resolveOAuthState(auth.store, state, saved);
+		resolveOAuthState(state, saved);
 		const tokens = await this.validateAuthorizationCode(code);
 		// Notion returns the authorizing user inside the token response.
 		const data = tokens.data as Record<string, unknown>;

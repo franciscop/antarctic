@@ -14,19 +14,11 @@ export interface OAuthUser {
 	scopes?: string[] | null;
 }
 
-// Structurally compatible with a polystore instance (https://polystore.dev/).
-export interface OAuthStateStore {
-	get: (key: string) => Promise<any>;
-	set: (key: string, value: any, options?: { expires?: number | string }) => Promise<any>;
-	del: (key: string) => Promise<any>;
-}
-
 export interface ProviderOptions {
 	clientId?: string;
 	clientSecret?: string;
 	redirectURI?: string;
 	scopes?: string[];
-	store: OAuthStateStore;
 }
 
 export class OAuthConfigurationError extends Error {}
@@ -35,7 +27,7 @@ export class InvalidOAuthCallbackError extends Error {}
 
 export class InvalidOAuthStateError extends Error {
 	constructor() {
-		super("Unknown or expired OAuth state");
+		super("OAuth state does not match the saved state");
 	}
 }
 
@@ -53,7 +45,6 @@ export interface AuthConfig {
 	clientSecret: string | null;
 	redirectURI: string | null;
 	scopes: string[] | null;
-	store: OAuthStateStore;
 }
 
 function readEnvironment(name: string): string | null {
@@ -124,22 +115,13 @@ export function resolveAuthConfig(
 			scopes = envScopes.split(/[\s,]+/).filter((scope) => scope !== "");
 		}
 	}
-	if (options.store === undefined) {
-		throw new OAuthConfigurationError("Missing 'store': pass a polystore-compatible store");
-	}
-	return {
-		clientId,
-		clientSecret,
-		redirectURI,
-		scopes,
-		store: options.store
-	};
+	return { clientId, clientSecret, redirectURI, scopes };
 }
 
 export function requireAuthConfig(auth: AuthConfig | null): AuthConfig {
 	if (auth === null) {
 		throw new OAuthConfigurationError(
-			"getAuthorizationURL() and getUser() require the options constructor with a 'store'"
+			"getAuthorizationURL() and getUser() require the options constructor"
 		);
 	}
 	return auth;
@@ -153,35 +135,11 @@ export function resolveScopes(
 	return argument ?? auth.scopes ?? defaultScopes;
 }
 
-const stateKeyPrefix = "arctic:state:";
-const stateExpiresSeconds = 60 * 10;
-
 export interface StoredOAuthState {
 	codeVerifier?: string;
 	nonce?: string;
 	// Only for providers that also need the scopes when exchanging the code.
 	scopes?: string[];
-}
-
-export async function saveOAuthState(
-	store: OAuthStateStore,
-	state: string,
-	payload: StoredOAuthState
-): Promise<void> {
-	await store.set(stateKeyPrefix + state, payload, { expires: stateExpiresSeconds });
-}
-
-export async function consumeOAuthState(
-	store: OAuthStateStore,
-	state: string
-): Promise<StoredOAuthState> {
-	const key = stateKeyPrefix + state;
-	const payload: unknown = await store.get(key);
-	if (typeof payload !== "object" || payload === null) {
-		throw new InvalidOAuthStateError();
-	}
-	await store.del(key);
-	return payload as StoredOAuthState;
 }
 
 export interface AuthorizationRequest {
@@ -195,20 +153,12 @@ export interface SavedOAuthState {
 	payload?: StoredOAuthState;
 }
 
-// With `saved` the caller kept the state itself, so comparing it against the
-// value the provider echoed back is the CSRF check. Otherwise the store is.
-export async function resolveOAuthState(
-	store: OAuthStateStore,
-	state: string,
-	saved?: SavedOAuthState
-): Promise<StoredOAuthState> {
-	if (saved !== undefined) {
-		if (saved.state !== state) {
-			throw new InvalidOAuthStateError();
-		}
-		return saved.payload ?? {};
+// Comparing the saved state against the one the provider echoed back is the CSRF check.
+export function resolveOAuthState(state: string, saved: SavedOAuthState): StoredOAuthState {
+	if (saved?.state !== state) {
+		throw new InvalidOAuthStateError();
 	}
-	return await consumeOAuthState(store, state);
+	return saved.payload ?? {};
 }
 
 // OAuth2Tokens throws on absent fields, and most providers omit the refresh

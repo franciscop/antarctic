@@ -10,8 +10,7 @@ import {
 	requireAuthConfig,
 	resolveAuthConfig,
 	resolveOAuthState,
-	resolveScopes,
-	saveOAuthState
+	resolveScopes
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
@@ -39,10 +38,10 @@ export class Patreon {
 	private redirectURI: string;
 	private auth: AuthConfig | null = null;
 
-	constructor(options: PatreonOptions);
+	constructor(options?: PatreonOptions);
 	constructor(clientId: string, clientSecret: string, redirectURI: string);
 	constructor(
-		clientIdOrOptions: string | PatreonOptions,
+		clientIdOrOptions: string | PatreonOptions = {},
 		clientSecret?: string,
 		redirectURI?: string
 	) {
@@ -101,14 +100,13 @@ export class Patreon {
 		const state = generateOAuthState();
 		const url = this.createAuthorizationURL(state, resolveScopes(scopes, auth, defaultScopes));
 		const payload = {};
-		await saveOAuthState(auth.store, state, payload);
 		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
-		const auth = requireAuthConfig(this.auth);
+	public async getUser(query: OAuthCallbackQuery, saved: SavedOAuthState): Promise<OAuthUser> {
+		requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		await resolveOAuthState(auth.store, state, saved);
+		resolveOAuthState(state, saved);
 		const tokens = await this.validateAuthorizationCode(code);
 		const url = new URL(identityEndpoint);
 		url.searchParams.set("fields[user]", "email,full_name,image_url");

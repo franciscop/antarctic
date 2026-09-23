@@ -11,8 +11,7 @@ import {
 	requireAuthConfig,
 	resolveAuthConfig,
 	resolveOAuthState,
-	resolveScopes,
-	saveOAuthState
+	resolveScopes
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
@@ -39,9 +38,9 @@ export class Etsy {
 	private client: OAuth2Client;
 	private auth: AuthConfig | null = null;
 
-	constructor(options: EtsyOptions);
+	constructor(options?: EtsyOptions);
 	constructor(clientId: string, redirectURI: string);
-	constructor(clientIdOrOptions: string | EtsyOptions, redirectURI?: string) {
+	constructor(clientIdOrOptions: string | EtsyOptions = {}, redirectURI?: string) {
 		if (typeof clientIdOrOptions === "object") {
 			this.auth = resolveAuthConfig(envPrefix, clientIdOrOptions, { redirectURI: true });
 			this.client = new OAuth2Client(this.auth.clientId, null, this.auth.redirectURI);
@@ -88,14 +87,13 @@ export class Etsy {
 			resolveScopes(scopes, auth, defaultScopes)
 		);
 		const payload = { codeVerifier };
-		await saveOAuthState(auth.store, state, payload);
 		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
+	public async getUser(query: OAuthCallbackQuery, saved: SavedOAuthState): Promise<OAuthUser> {
 		const auth = requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		const stored = await resolveOAuthState(auth.store, state, saved);
+		const stored = resolveOAuthState(state, saved);
 		if (typeof stored.codeVerifier !== "string") {
 			throw new InvalidOAuthCallbackError("Missing PKCE code verifier for OAuth state");
 		}

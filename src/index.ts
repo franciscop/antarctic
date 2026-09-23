@@ -82,7 +82,6 @@ export {
 export type {
 	AuthorizationRequest,
 	OAuthCallbackQuery,
-	OAuthStateStore,
 	OAuthUser,
 	ProviderOptions,
 	SavedOAuthState,

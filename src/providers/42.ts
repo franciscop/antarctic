@@ -9,8 +9,7 @@ import {
 	requireAuthConfig,
 	resolveAuthConfig,
 	resolveOAuthState,
-	resolveScopes,
-	saveOAuthState
+	resolveScopes
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
@@ -38,10 +37,10 @@ export class FortyTwo {
 	private redirectURI: string;
 	private auth: AuthConfig | null = null;
 
-	constructor(options: FortyTwoOptions);
+	constructor(options?: FortyTwoOptions);
 	constructor(clientId: string, clientSecret: string, redirectURI: string);
 	constructor(
-		clientIdOrOptions: string | FortyTwoOptions,
+		clientIdOrOptions: string | FortyTwoOptions = {},
 		clientSecret?: string,
 		redirectURI?: string
 	) {
@@ -89,14 +88,13 @@ export class FortyTwo {
 		const state = generateOAuthState();
 		const url = this.createAuthorizationURL(state, resolveScopes(scopes, auth, defaultScopes));
 		const payload = {};
-		await saveOAuthState(auth.store, state, payload);
 		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
-		const auth = requireAuthConfig(this.auth);
+	public async getUser(query: OAuthCallbackQuery, saved: SavedOAuthState): Promise<OAuthUser> {
+		requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		await resolveOAuthState(auth.store, state, saved);
+		resolveOAuthState(state, saved);
 		const tokens = await this.validateAuthorizationCode(code);
 		const profile = await fetchUserProfile(userEndpoint, tokens.accessToken());
 		let image: string | null = null;

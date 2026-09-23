@@ -9,8 +9,7 @@ import {
 	requireAuthConfig,
 	resolveAuthConfig,
 	resolveOAuthState,
-	resolveScopes,
-	saveOAuthState
+	resolveScopes
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
@@ -37,10 +36,10 @@ export class Dropbox {
 	private client: OAuth2Client;
 	private auth: AuthConfig | null = null;
 
-	constructor(options: DropboxOptions);
+	constructor(options?: DropboxOptions);
 	constructor(clientId: string, clientSecret: string, redirectURI: string);
 	constructor(
-		clientIdOrOptions: string | DropboxOptions,
+		clientIdOrOptions: string | DropboxOptions = {},
 		clientSecret?: string,
 		redirectURI?: string
 	) {
@@ -83,14 +82,13 @@ export class Dropbox {
 		const state = generateOAuthState();
 		const url = this.createAuthorizationURL(state, resolveScopes(scopes, auth, defaultScopes));
 		const payload = {};
-		await saveOAuthState(auth.store, state, payload);
 		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
-		const auth = requireAuthConfig(this.auth);
+	public async getUser(query: OAuthCallbackQuery, saved: SavedOAuthState): Promise<OAuthUser> {
+		requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		await resolveOAuthState(auth.store, state, saved);
+		resolveOAuthState(state, saved);
 		const tokens = await this.validateAuthorizationCode(code);
 		const profile = await fetchCurrentAccount(tokens.accessToken());
 		let name: string | null = null;

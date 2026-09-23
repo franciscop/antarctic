@@ -9,8 +9,7 @@ import {
 	requireAuthConfig,
 	resolveAuthConfig,
 	resolveOAuthState,
-	resolveScopes,
-	saveOAuthState
+	resolveScopes
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
@@ -89,10 +88,10 @@ export class StartGG {
 	private redirectURI: string;
 	private auth: AuthConfig | null = null;
 
-	constructor(options: StartGGOptions);
+	constructor(options?: StartGGOptions);
 	constructor(clientId: string, clientSecret: string, redirectURI: string);
 	constructor(
-		clientIdOrOptions: string | StartGGOptions,
+		clientIdOrOptions: string | StartGGOptions = {},
 		clientSecret?: string,
 		redirectURI?: string
 	) {
@@ -159,14 +158,13 @@ export class StartGG {
 		const resolved = resolveScopes(scopes, auth, defaultScopes);
 		const url = this.createAuthorizationURL(state, resolved);
 		const payload = { scopes: resolved };
-		await saveOAuthState(auth.store, state, payload);
 		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
+	public async getUser(query: OAuthCallbackQuery, saved: SavedOAuthState): Promise<OAuthUser> {
 		const auth = requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		const stored = await resolveOAuthState(auth.store, state, saved);
+		const stored = resolveOAuthState(state, saved);
 		const tokens = await this.validateAuthorizationCode(
 			code,
 			stored.scopes ?? resolveScopes(undefined, auth, defaultScopes)

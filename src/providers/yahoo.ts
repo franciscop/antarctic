@@ -10,8 +10,7 @@ import {
 	requireAuthConfig,
 	resolveAuthConfig,
 	resolveOAuthState,
-	resolveScopes,
-	saveOAuthState
+	resolveScopes
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
@@ -37,10 +36,10 @@ export class Yahoo {
 	private client: OAuth2Client;
 	private auth: AuthConfig | null = null;
 
-	constructor(options: YahooOptions);
+	constructor(options?: YahooOptions);
 	constructor(clientId: string, clientSecret: string, redirectURI: string);
 	constructor(
-		clientIdOrOptions: string | YahooOptions,
+		clientIdOrOptions: string | YahooOptions = {},
 		clientSecret?: string,
 		redirectURI?: string
 	) {
@@ -79,14 +78,13 @@ export class Yahoo {
 		const state = generateOAuthState();
 		const url = this.createAuthorizationURL(state, resolveScopes(scopes, auth, defaultScopes));
 		const payload = {};
-		await saveOAuthState(auth.store, state, payload);
 		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
-		const auth = requireAuthConfig(this.auth);
+	public async getUser(query: OAuthCallbackQuery, saved: SavedOAuthState): Promise<OAuthUser> {
+		requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		await resolveOAuthState(auth.store, state, saved);
+		resolveOAuthState(state, saved);
 		const tokens = await this.validateAuthorizationCode(code);
 		let claims: Record<string, unknown>;
 		if ("id_token" in (tokens.data as object)) {

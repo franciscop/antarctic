@@ -11,8 +11,7 @@ import {
 	requireProviderOption,
 	resolveAuthConfig,
 	resolveOAuthState,
-	resolveScopes,
-	saveOAuthState
+	resolveScopes
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
@@ -41,10 +40,10 @@ export class GitLab {
 	private client: OAuth2Client;
 	private auth: AuthConfig | null = null;
 
-	constructor(options: GitLabOptions);
+	constructor(options?: GitLabOptions);
 	constructor(baseURL: string, clientId: string, clientSecret: string | null, redirectURI: string);
 	constructor(
-		baseURLOrOptions: string | GitLabOptions,
+		baseURLOrOptions: string | GitLabOptions = {},
 		clientId?: string,
 		clientSecret?: string | null,
 		redirectURI?: string
@@ -95,14 +94,13 @@ export class GitLab {
 		const state = generateOAuthState();
 		const url = this.createAuthorizationURL(state, resolveScopes(scopes, auth, defaultScopes));
 		const payload = {};
-		await saveOAuthState(auth.store, state, payload);
 		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
-		const auth = requireAuthConfig(this.auth);
+	public async getUser(query: OAuthCallbackQuery, saved: SavedOAuthState): Promise<OAuthUser> {
+		requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		await resolveOAuthState(auth.store, state, saved);
+		resolveOAuthState(state, saved);
 		const tokens = await this.validateAuthorizationCode(code);
 		// GitLab id_tokens omit profile claims, so always use the OIDC userinfo endpoint.
 		const userinfoEndpoint = joinURIAndPath(this.baseURL, "/oauth/userinfo");

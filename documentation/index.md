@@ -3,29 +3,33 @@
 Antarctic is a collection of OAuth 2.0 clients for popular providers, with a high level layer that handles the whole sign-in flow for you. It is a fork of [Arctic](https://arcticjs.dev) by [pilcrowOnPaper](https://github.com/pilcrowOnPaper), whose work is every OAuth 2.0 client and provider here. Only the authorization code flow is supported. Built on the Fetch API, it is light weight, fully typed, and runtime agnostic.
 
 ```
-npm install antarctic polystore
+npm install antarctic
 ```
 
 ## Quick start
 
-Construct a provider with a store, send the user to the authorization URL, and read them back in your callback route.
+Send the user to the authorization URL, keep the `state` and `payload` it returns until they come back, and read them in your callback route.
 
 ```ts
 import * as auth from "antarctic";
-import kv from "polystore";
 
-const store = kv(new Map());
-const github = new auth.GitHub({ store });
+const github = new auth.GitHub();
 
 // Where you start the login.
-const { url } = await github.getAuthorizationURL();
+const { url, state, payload } = await github.getAuthorizationURL();
+setCookie("oauth", JSON.stringify({ state, payload }), {
+	secure: true, // set to false in localhost
+	path: "/",
+	httpOnly: true,
+	maxAge: 60 * 10 // 10 min
+});
 
 // In your OAuth callback route.
-const user = await github.getUser(request.url);
+const user = await github.getUser(request.url, JSON.parse(getCookie("oauth")));
 // { id: "1", name: "The Octocat", email: "octocat@github.com", image: "https://..." }
 ```
 
-`getAuthorizationURL()` generates the `state` and the PKCE verifier, keeps them in the store, and returns them alongside the `url`. `getUser()` validates the `state`, exchanges the code, fetches the profile, and returns the same shape for every provider: `{ id, name, email, image, raw, accessToken, refreshToken, scopes }`.
+`getAuthorizationURL()` generates the `state` and the PKCE verifier and returns them alongside the `url`. `getUser()` checks the `state` against the one you kept, exchanges the code, fetches the profile, and returns the same shape for every provider: `{ id, name, email, image, raw, accessToken, refreshToken, scopes }`.
 
 Credentials come from the environment when you do not pass them, so the example above reads `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`. See the [high level API](/documentation/high-level-api) for the full flow, and [providers](/documentation/providers) for what each one supports.
 

@@ -11,8 +11,7 @@ import {
 	profileString,
 	requireAuthConfig,
 	resolveAuthConfig,
-	resolveOAuthState,
-	saveOAuthState
+	resolveOAuthState
 } from "../auth.js";
 
 import type { OAuth2Tokens } from "../oauth2.js";
@@ -40,10 +39,10 @@ export class MercadoLibre {
 	private redirectURI: string;
 	private auth: AuthConfig | null = null;
 
-	constructor(options: MercadoLibreOptions);
+	constructor(options?: MercadoLibreOptions);
 	constructor(clientId: string, clientSecret: string, redirectURI: string);
 	constructor(
-		clientIdOrOptions: string | MercadoLibreOptions,
+		clientIdOrOptions: string | MercadoLibreOptions = {},
 		clientSecret?: string,
 		redirectURI?: string
 	) {
@@ -104,19 +103,18 @@ export class MercadoLibre {
 
 	// Scopes are defined in the application settings, so the argument is ignored.
 	public async getAuthorizationURL(_scopes?: string[]): Promise<AuthorizationRequest> {
-		const auth = requireAuthConfig(this.auth);
+		requireAuthConfig(this.auth);
 		const state = generateOAuthState();
 		const codeVerifier = generateOAuthCodeVerifier();
 		const url = await this.createAuthorizationURL(state, codeVerifier);
 		const payload = { codeVerifier };
-		await saveOAuthState(auth.store, state, payload);
 		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
-		const auth = requireAuthConfig(this.auth);
+	public async getUser(query: OAuthCallbackQuery, saved: SavedOAuthState): Promise<OAuthUser> {
+		requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		const stored = await resolveOAuthState(auth.store, state, saved);
+		const stored = resolveOAuthState(state, saved);
 		if (typeof stored.codeVerifier !== "string") {
 			throw new InvalidOAuthCallbackError("Missing PKCE code verifier for OAuth state");
 		}

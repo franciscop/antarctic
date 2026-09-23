@@ -17,8 +17,7 @@ import {
 	requireAuthConfig,
 	resolveAuthConfig,
 	resolveOAuthState,
-	resolveScopes,
-	saveOAuthState
+	resolveScopes
 } from "../auth.js";
 
 import type {
@@ -46,10 +45,10 @@ export class GitHub {
 	private redirectURI: string | null;
 	private auth: AuthConfig | null = null;
 
-	constructor(options: GitHubOptions);
+	constructor(options?: GitHubOptions);
 	constructor(clientId: string, clientSecret: string, redirectURI: string | null);
 	constructor(
-		clientIdOrOptions: string | GitHubOptions,
+		clientIdOrOptions: string | GitHubOptions = {},
 		clientSecret?: string,
 		redirectURI?: string | null
 	) {
@@ -109,14 +108,13 @@ export class GitHub {
 		const state = generateOAuthState();
 		const url = this.createAuthorizationURL(state, resolveScopes(scopes, auth, defaultScopes));
 		const payload = {};
-		await saveOAuthState(auth.store, state, payload);
 		return { url, state, payload };
 	}
 
-	public async getUser(query: OAuthCallbackQuery, saved?: SavedOAuthState): Promise<OAuthUser> {
-		const auth = requireAuthConfig(this.auth);
+	public async getUser(query: OAuthCallbackQuery, saved: SavedOAuthState): Promise<OAuthUser> {
+		requireAuthConfig(this.auth);
 		const { code, state } = parseCallbackQuery(query);
-		await resolveOAuthState(auth.store, state, saved);
+		resolveOAuthState(state, saved);
 		const tokens = await this.validateAuthorizationCode(code);
 		const accessToken = tokens.accessToken();
 		const profile = await fetchUserProfile(userEndpoint, accessToken);
