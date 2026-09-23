@@ -9,10 +9,10 @@
 	},
 	"documentation": {
 		"index": "documentation/index.md",
-		"1. Providers": "documentation/providers",
+		"1. Providers": ["documentation/providers.md", "documentation/providers"],
 		"2. High-level API": "documentation/high-level-api.md",
 		"3. Low-level API": "documentation/low-level-api.md",
-		"4. Reference": "documentation/reference",
+		"4. Reference": ["documentation/reference.md", "documentation/reference"],
 		"5. From Arctic": "documentation/migrating.md"
 	}
 }

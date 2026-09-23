@@ -1,4 +1,4 @@
-## Overview
+# Providers
 
 Every provider exposes the low-level API documented below: a constructor, `createAuthorizationURL()`, `validateAuthorizationCode()`, and where the provider supports them `refreshAccessToken()` and `revokeToken()`.
 
