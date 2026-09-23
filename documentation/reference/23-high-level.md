@@ -48,7 +48,7 @@ interface AuthorizationRequest {
 }
 ```
 
-`payload` holds the PKCE verifier where the provider uses one, and is empty otherwise. Keep both until the callback and pass them to `getUser()` as `{ state, payload }`.
+`payload` holds whatever `getUser()` needs later, such as the PKCE verifier, and is often empty. Treat it as opaque. Keep both until the callback and pass them to `getUser()` as `{ state, payload }`.
 
 ## OAuthConfigurationError
 

@@ -2,7 +2,7 @@
 
 OAuth 2.0 provider for Microsoft Entra ID.
 
-Also see the [OAuth 2.0](/documentation/oauth2) guide.
+Also see [OAuth 2.0 with PKCE](/low-level-api#with-pkce).
 
 ### Initialization
 
@@ -28,7 +28,7 @@ const url = await entraId.createAuthorizationURL(state, codeVerifier, scopes);
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). Entra ID returns an access token, the access token expiration, and a refresh token.
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). Entra ID returns an access token, the access token expiration, and a refresh token.
 
 ```ts
 import * as arctic from "antarctic";
@@ -78,14 +78,14 @@ try {
 
 ### OpenID Connect
 
-Use OpenID Connect with the `openid` scope to get the user's profile with an ID token or the `userinfo` endpoint. The `nonce` parameter is required by Entra ID to use OpenID. Antarctic provides [`decodeIdToken()`](/documentation/reference#decodeidtoken) for decoding the token's payload.
+Use OpenID Connect with the `openid` scope to get the user's profile with an ID token or the `userinfo` endpoint. The `nonce` parameter is required by Entra ID to use OpenID. Antarctic provides [`decodeIdToken()`](/reference#decodeidtoken) for decoding the token's payload.
 
 ```ts
 const scopes = ["openid"];
 const url = await entraId.createAuthorizationURL(state, codeVerifier, scopes);
 // The nonce should be unique to each request similar to state.
 // However, nonce can just be "_" here since it isn't useful for server-based OAuth.
-url.searchParams.set("nonce", nonce);
+url.searchParams.set("nonce", "_");
 ```
 
 ```ts

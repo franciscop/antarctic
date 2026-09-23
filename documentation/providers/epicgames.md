@@ -2,7 +2,7 @@
 
 OAuth 2.0 provider for Epic Games.
 
-Also see the [OAuth 2.0](/documentation/oauth2) guide.
+Also see the [OAuth 2.0](/low-level-api#without-pkce) guide.
 
 ### Initialization
 
@@ -24,7 +24,7 @@ const url = epicgames.createAuthorizationURL(state, scopes);
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). Epic returns an access token, the access token expiration, and a refresh token.
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). Epic returns an access token, the access token expiration, and a refresh token.
 
 ```ts
 import * as arctic from "antarctic";
@@ -94,7 +94,7 @@ Add the `basic_profile` scope and use the [`/v2/userInfo` endpoint](https://dev.
 
 ```ts
 const scopes = ["basic_profile"];
-const url = epic.createAuthorizationURL(state, scopes);
+const url = epicgames.createAuthorizationURL(state, scopes);
 ```
 
 ```ts
@@ -112,7 +112,7 @@ Pass a token to `revokeToken()` to revoke all tokens associated with the authori
 
 ```ts
 try {
-	await epic.revokeToken(token);
+	await epicgames.revokeToken(token);
 } catch (e) {
 	if (e instanceof arctic.OAuth2RequestError) {
 		// Invalid authorization code, credentials, or redirect URI

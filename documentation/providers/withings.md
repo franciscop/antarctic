@@ -2,7 +2,7 @@
 
 OAuth 2.0 provider for Withings.
 
-Also see the [OAuth 2.0](/documentation/oauth2) guide.
+Also see the [OAuth 2.0](/low-level-api#without-pkce) guide.
 
 ### Initialization
 
@@ -24,7 +24,7 @@ const url = withings.createAuthorizationURL(state, scopes);
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). Withings will return an access token with an expiration.
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). Withings will return an access token with an expiration.
 
 Withings deviates from the RFC and the value of `OAuth2RequestError.code` will not be a registered OAuth 2.0 error code.
 

@@ -2,7 +2,7 @@
 
 OAuth 2.0 authorization code provider for TikTok.
 
-Also see [OAuth 2.0 with PKCE](/documentation/oauth2-with-pkce).
+Also see [OAuth 2.0 with PKCE](/low-level-api#with-pkce).
 
 ### Initialization
 
@@ -25,7 +25,7 @@ const url = await tiktok.createAuthorizationURL(state, codeVerifier, scopes);
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). TikTok returns an access token, the access token expiration, and a refresh token.
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). TikTok returns an access token, the access token expiration, and a refresh token.
 
 ```ts
 import * as arctic from "antarctic";
@@ -53,7 +53,7 @@ try {
 The refresh token expiration is returned as `refresh_expires_in`.
 
 ```ts
-const tokens = await tiktok.validateAuthorizationCode(code);
+const tokens = await tiktok.validateAuthorizationCode(code, codeVerifier);
 if ("refresh_expires_in" in tokens.data && typeof tokens.data.refresh_expires_in === "number") {
 	const refreshTokenExpiresIn = tokens.data.refresh_expires_in;
 }

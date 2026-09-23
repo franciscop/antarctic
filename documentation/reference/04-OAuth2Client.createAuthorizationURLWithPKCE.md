@@ -11,7 +11,7 @@ function createAuthorizationURLWithPKCE(
 	codeChallengeMethod: CodeChallengeMethod,
 	codeVerifier: string,
 	scopes: string[]
-);
+): Promise<URL>;
 ```
 
 #### Parameters

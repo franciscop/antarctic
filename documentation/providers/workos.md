@@ -2,7 +2,7 @@
 
 OAuth 2.0 provider for WorkOS.
 
-Also see the [OAuth 2.0](/documentation/oauth2) guide.
+Also see the [OAuth 2.0](/low-level-api#without-pkce) guide.
 
 ### Initialization
 
@@ -21,14 +21,19 @@ const workos = new arctic.WorkOS(clientId, null, redirectURI);
 import * as arctic from "antarctic";
 
 const state = arctic.generateState();
-const url = await workos.createAuthorizationURL(state);
+// Confidential clients
+const url = await workos.createAuthorizationURL(state, null);
+
+// Public clients
+const codeVerifier = arctic.generateCodeVerifier();
+const url = await workos.createAuthorizationURL(state, codeVerifier);
 ```
 
 ### Validate authorization code
 
 For confidential clients, pass the authorization code.
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). WorkOS will only return an access token (no expiration).
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). WorkOS will only return an access token (no expiration).
 
 ```ts
 import * as arctic from "antarctic";
@@ -62,7 +67,7 @@ const tokens = await workos.validateAuthorizationCode(code, codeVerifier);
 The [profile](https://workos.com/docs/reference/sso/profile) is included in the token response.
 
 ```ts
-const tokens = await workos.validateAuthorizationCode(code);
+const tokens = await workos.validateAuthorizationCode(code, null);
 if (
 	"profile" in tokens.data &&
 	typeof tokens.data.profile === "object" &&

@@ -2,14 +2,14 @@
 
 OAuth 2.0 provider for Dribbble.
 
-Also see the [OAuth 2.0](/documentation/oauth2) guide.
+Also see the [OAuth 2.0](/low-level-api#without-pkce) guide.
 
 ### Initialization
 
 ```ts
 import * as arctic from "antarctic";
 
-const dribble = new arctic.Dribble(clientId, clientSecret, redirectURI);
+const dribbble = new arctic.Dribbble(clientId, clientSecret, redirectURI);
 ```
 
 ### Create authorization URL
@@ -19,12 +19,12 @@ import * as arctic from "antarctic";
 
 const state = arctic.generateState();
 const scopes = ["public", "upload"];
-const url = dribble.createAuthorizationURL(state, scopes);
+const url = dribbble.createAuthorizationURL(state, scopes);
 ```
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). Dribble will only return an access token (no expiration).
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). Dribbble will only return an access token (no expiration).
 
 ```ts
 import * as arctic from "antarctic";

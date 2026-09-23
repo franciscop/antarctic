@@ -6,7 +6,7 @@ Antarctic forks Arctic 3.7 and is published as `antarctic`, so start by changing
 import * as arctic from "antarctic";
 ```
 
-The [high level API](/documentation/high-level-api) is added on top of everything you already use. One low level change needs your attention.
+The [high level API](/high-level-api) is added on top of everything you already use. One low level change needs your attention.
 
 ## PKCE providers are asynchronous
 
@@ -22,7 +22,7 @@ Providers without PKCE are unchanged and still return a `URL` directly:
 const url = github.createAuthorizationURL(state, scopes);
 ```
 
-`OAuth2Client.createAuthorizationURLWithPKCE()` returns a promise for the same reason. The [providers](/documentation/providers) page lists which providers use PKCE, and nothing else in the [reference](/documentation/reference) changed.
+`OAuth2Client.createAuthorizationURLWithPKCE()` returns a promise for the same reason. The [providers](/providers) page lists which providers use PKCE, and nothing else in the [reference](/reference) changed.
 
 ## Older versions of Arctic
 

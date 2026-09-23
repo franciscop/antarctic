@@ -20,6 +20,7 @@
 		"pilcrowOnPaper (author of Arctic, which Antarctic is a fork of)"
 	],
 	"license": "MIT",
+	"homepage": "https://antarcticjs.dev",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/franciscop/antarctic.git"

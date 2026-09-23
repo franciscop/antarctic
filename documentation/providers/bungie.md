@@ -1,8 +1,8 @@
 ## Bungie
 
-OAuth 2.0 provider for Bungie. Only supports confidential clients.
+OAuth 2.0 provider for Bungie.
 
-Also see the [OAuth 2.0](/documentation/oauth2) guide.
+Also see the [OAuth 2.0](/low-level-api#without-pkce) guide.
 
 ### Initialization
 
@@ -27,7 +27,7 @@ const url = bungie.createAuthorizationURL(state, scopes);
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror)..
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror).
 
 ```ts
 import * as arctic from "antarctic";
@@ -102,5 +102,5 @@ const response = await fetch("https://www.bungie.net/Platform/User/GetCurrentBun
 		"X-API-Key": apiKey
 	}
 });
-const emails = await response.json();
+const user = await response.json();
 ```

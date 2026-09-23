@@ -2,7 +2,7 @@
 
 OAuth 2.0 provider for Twitter API v2.
 
-Also see the [OAuth 2.0 with PKCE](/documentation/oauth2-with-pkce) guide.
+Also see the [OAuth 2.0 with PKCE](/low-level-api#with-pkce) guide.
 
 ### Initialization
 
@@ -21,13 +21,14 @@ const twitter = new arctic.Twitter(clientId, null, redirectURI);
 import * as arctic from "antarctic";
 
 const state = arctic.generateState();
-const scopes = ["account_info.read", "files.content.read"];
+const codeVerifier = arctic.generateCodeVerifier();
+const scopes = ["users.read", "tweet.read"];
 const url = await twitter.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). Twitter returns an access token and its expiration.
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). Twitter returns an access token and its expiration.
 
 ```ts
 import * as arctic from "antarctic";

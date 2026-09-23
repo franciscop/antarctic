@@ -2,6 +2,8 @@
 
 Antarctic is a fork of [Arctic](https://arcticjs.dev) by [pilcrowOnPaper](https://github.com/pilcrowOnPaper), adding a high level auth layer on top of its OAuth 2.0 clients. Only the authorization code flow is supported. Built on top of the Fetch API, it's light weight, fully-typed, and runtime-agnostic.
 
+Read the documentation at [antarcticjs.dev](https://antarcticjs.dev).
+
 All of the OAuth 2.0 clients and provider coverage are Arctic's work. If you only need those, use [Arctic](https://arcticjs.dev) directly. See [credits](#credits).
 
 ```
@@ -10,47 +12,88 @@ npm install antarctic
 
 ## High-level API
 
-Construct a provider with an options object and get two methods that handle the whole flow: `getAuthorizationURL()` and `getUser()`. State and PKCE values are generated for you, and you keep them between the two steps, for example in a signed cookie.
+Every provider except Synology has two methods that run the whole sign-in flow: `getAuthorizationURL()` starts it and `getUser()` finishes it in your callback route. Antarctic keeps nothing in between: you hold the `state` and `payload` from the first call, usually in a signed cookie, and pass them to the second.
 
 ```ts
 import * as auth from "antarctic";
 
-const scopes = ["read:user", "user:email"];
-const github = new auth.GitHub({ scopes });
+const github = new auth.GitHub();
 
-// Redirect the user here to sign in, keeping state and payload in a cookie.
+// Login route
 const { url, state, payload } = await github.getAuthorizationURL();
+setCookie("oauth", JSON.stringify({ state, payload }), { httpOnly: true, maxAge: 600 });
+return Response.redirect(url);
 
-// In the OAuth callback route, with the state and payload read back:
-const user = await github.getUser(request.url, { state, payload });
-// { id: "1", name: "The Octocat", email: "octocat@github.com", image: "https://..." }
+// Callback route
+const user = await github.getUser(request.url, JSON.parse(getCookie("oauth")));
+// { id: "1", name: "The Octocat", email: "octocat@github.com", image: "https://...", ... }
 ```
 
-`getUser()` accepts the callback query as a full URL, a query string, a `URLSearchParams`, or a plain object. It checks the `state` against the one you kept, exchanges the code (with PKCE where the provider supports it), fetches the profile, and returns the user along with the tokens: `{ id, name, email, image, raw, accessToken, refreshToken, scopes }`.
+### Options
 
-Options resolve as `explicit > environment > provider default`. Every option can come from the environment, named after the provider:
+```ts
+new auth.GitHub({ clientId, clientSecret, redirectURI, scopes });
+```
+
+Every option is optional. A missing one falls back to an environment variable named after the provider, then to the provider default:
 
 ```
 GITHUB_CLIENT_ID
 GITHUB_CLIENT_SECRET
 GITHUB_REDIRECT_URI
 GITHUB_SCOPES
-
-GOOGLE_CLIENT_ID
-...
 ```
 
-`GITHUB_SCOPES` takes a list separated by commas, whitespace, or both. Scopes resolve as `argument > constructor > environment > provider default`, where the provider default is the minimal set that yields a full profile:
+The environment is read when the provider is constructed, so load your `.env` file first. Some providers take extra options, such as Auth0's `domain` (`AUTH0_DOMAIN`). Apple always needs `{ pkcs8PrivateKey }`, which has no environment variable.
+
+### `getAuthorizationURL(scopes?)`
+
+Generates a fresh `state` and, where the provider uses PKCE, a code verifier. It returns:
+
+- `url`: where to redirect the user.
+- `state`: the CSRF token.
+- `payload`: whatever `getUser()` needs later, such as the PKCE verifier. Keep it as it is.
+
+### `getUser(query, { state, payload })`
+
+Takes the callback query (a full URL, a query string, a `URLSearchParams`, or a plain object) and the `state` and `payload` you kept. It checks your `state` against the one in the query, exchanges the code, fetches the profile, and returns the same shape for every provider:
 
 ```ts
-await github.getAuthorizationURL(["repo"]); // overrides the constructor and the environment
+{
+	(id, name, email, image, raw, accessToken, refreshToken, scopes);
+}
 ```
 
-The environment is read when the provider is constructed, so load your `.env` file first. See the [documentation](https://documentation.page/github/franciscop/antarctic/) for the details.
+`name`, `email`, and `image` are `null` when the provider does not expose them. `raw` is the provider's own profile, for the fields this shape does not cover. `scopes` are the ones the provider actually granted, or `null` if it does not say.
 
-Errors thrown by the high-level layer: `InvalidOAuthStateError`, `InvalidOAuthCallbackError`, `OAuthConfigurationError`, and `OAuthProviderError`.
+Delete the saved state once you read it, so it cannot be used twice.
 
-Sessions, cookies, and your user database remain your responsibility: take the returned user and plug it into your framework of choice.
+### Scopes
+
+Scopes are set per provider and can be overridden per login. From highest to lowest priority:
+
+1. The argument to `getAuthorizationURL(scopes)`, for that login only.
+2. The `scopes` option, for every login with that provider.
+3. `GITHUB_SCOPES`, separated by commas, whitespace, or both.
+4. The provider default, the minimal set that yields a full profile.
+
+```ts
+const github = new auth.GitHub({ scopes: ["read:user", "user:email"] });
+
+await github.getAuthorizationURL(); // read:user user:email
+await github.getAuthorizationURL(["read:user", "user:email", "repo"]); // this login only
+```
+
+An override replaces the list instead of adding to it, so repeat the scopes you still need. An empty array requests none. AniList, Bitbucket, MercadoLibre, MercadoPago, MyAnimeList, Naver, Notion, Shikimori, and WorkOS take their scopes from the app settings and ignore all of the above.
+
+### Errors
+
+- `OAuthConfigurationError`: a required option is missing from both the constructor and the environment, or a high-level method was called on a provider built with the positional constructor.
+- `InvalidOAuthCallbackError`: the callback query has no `code` or `state`, or the `payload` lacks a PKCE verifier the provider needs.
+- `InvalidOAuthStateError`: the saved `state` does not match the one in the callback query.
+- `OAuthProviderError`: the provider returned an error, or a profile that cannot be used. `error.code` holds its error code when it sent one.
+
+Sessions, cookies, and your user database remain your responsibility: take the returned user and plug it into your framework of choice. See the [documentation](https://antarcticjs.dev/high-level-api) for the details.
 
 ## Low-level API
 
@@ -70,6 +113,8 @@ const authorizationURL = github.createAuthorizationURL(state, scopes);
 const tokens = await github.validateAuthorizationCode(code);
 const accessToken = tokens.accessToken();
 ```
+
+See the [low-level API](https://antarcticjs.dev/low-level-api) docs for the full flow.
 
 > Antarctic only supports providers that follow the OAuth 2.0 spec (including PKCE and token revocation).
 

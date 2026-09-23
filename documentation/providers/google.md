@@ -2,7 +2,7 @@
 
 OAuth 2.0 authorization code provider for Google. Only supports confidential clients.
 
-Also see [OAuth 2.0 with PKCE](/documentation/oauth2-with-pkce).
+Also see [OAuth 2.0 with PKCE](/low-level-api#with-pkce).
 
 ### Initialization
 
@@ -25,7 +25,7 @@ const url = await google.createAuthorizationURL(state, codeVerifier, scopes);
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). Google will return an access token with an expiration.
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). Google will return an access token with an expiration.
 
 ```ts
 import * as arctic from "antarctic";
@@ -52,7 +52,7 @@ try {
 The refresh token expiration is returned as `refresh_token_expires_in`.
 
 ```ts
-const tokens = await google.validateAuthorizationCode(code);
+const tokens = await google.validateAuthorizationCode(code, codeVerifier);
 if (
 	"refresh_token_expires_in" in tokens.data &&
 	typeof tokens.data.refresh_token_expires_in === "number"
@@ -63,7 +63,7 @@ if (
 
 ### OpenID Connect
 
-Use OpenID Connect with the `openid` scope to get the user's profile with an ID token or the `userinfo` endpoint. Antarctic provides [`decodeIdToken()`](/documentation/reference#decodeidtoken) for decoding the token's payload.
+Use OpenID Connect with the `openid` scope to get the user's profile with an ID token or the `userinfo` endpoint. Antarctic provides [`decodeIdToken()`](/reference#decodeidtoken) for decoding the token's payload.
 
 Also see [ID token claims](https://developers.google.com/identity/openid-connect/openid-connect#an-id-tokens-payload).
 

@@ -2,7 +2,7 @@
 
 Every provider exposes the low-level API documented below: a constructor, `createAuthorizationURL()`, `validateAuthorizationCode()`, and where the provider supports them `refreshAccessToken()` and `revokeToken()`.
 
-All of them except Synology also expose the [high level API](/documentation/high-level-api), `getAuthorizationURL()` and `getUser()`. Synology publishes no user profile endpoint, so it stays low-level only.
+All of them except Synology also expose the [high level API](/high-level-api), `getAuthorizationURL()` and `getUser()`. Synology publishes no user profile endpoint, so it stays low-level only.
 
 This table lists the environment prefix each provider reads its options from and the scopes it requests when you set none.
 
@@ -18,12 +18,12 @@ This table lists the environment prefix each provider reads its options from and
 | Autodesk Platform Services | `Autodesk`         | `AUTODESK_*`           | `openid`, `user-profile:read`                        |
 | Battle.net                 | `BattleNet`        | `BATTLE_NET_*`         | `openid`                                             |
 | Bitbucket                  | `Bitbucket`        | `BITBUCKET_*`          | Set in the app settings                              |
-| Box                        | `Box`              | `BOX_*`                | Set in the app settings                              |
-| Bungie                     | `Bungie`           | `BUNGIE_*`             | Set in the app settings                              |
+| Box                        | `Box`              | `BOX_*`                | None                                                 |
+| Bungie                     | `Bungie`           | `BUNGIE_*`             | None                                                 |
 | Coinbase                   | `Coinbase`         | `COINBASE_*`           | `wallet:user:read`, `wallet:user:email`              |
 | Discord                    | `Discord`          | `DISCORD_*`            | `identify`, `email`                                  |
 | DonationAlerts             | `DonationAlerts`   | `DONATION_ALERTS_*`    | `oauth-user-show`                                    |
-| Dribbble                   | `Dribbble`         | `DRIBBBLE_*`           | Set in the app settings                              |
+| Dribbble                   | `Dribbble`         | `DRIBBBLE_*`           | None                                                 |
 | Dropbox                    | `Dropbox`          | `DROPBOX_*`            | `account_info.read`                                  |
 | Epic Games                 | `EpicGames`        | `EPIC_GAMES_*`         | `basic_profile`                                      |
 | Etsy                       | `Etsy`             | `ETSY_*`               | `email_r`                                            |
@@ -50,7 +50,7 @@ This table lists the environment prefix each provider reads its options from and
 | Notion                     | `Notion`           | `NOTION_*`             | Set in the app settings                              |
 | Okta                       | `Okta`             | `OKTA_*`               | `openid`, `profile`, `email`                         |
 | osu!                       | `Osu`              | `OSU_*`                | `identify`                                           |
-| Patreon                    | `Patreon`          | `PATREON_*`            | `identity`                                           |
+| Patreon                    | `Patreon`          | `PATREON_*`            | `identity`, `identity[email]`                        |
 | Polar                      | `Polar`            | `POLAR_*`              | `openid`, `profile`, `email`                         |
 | Reddit                     | `Reddit`           | `REDDIT_*`             | `identity`                                           |
 | Roblox                     | `Roblox`           | `ROBLOX_*`             | `openid`, `profile`                                  |

@@ -2,7 +2,7 @@
 
 OAuth 2.0 provider for Gitea.
 
-Also see [OAuth 2.0 with PKCE](/documentation/oauth2-with-pkce).
+Also see [OAuth 2.0 with PKCE](/low-level-api#with-pkce).
 
 ### Initialization
 
@@ -13,8 +13,8 @@ import * as arctic from "antarctic";
 
 const baseURL = "https://gitea.com";
 const baseURL = "https://my-app.com/gitea";
-const gitea = new arctic.gitea(baseURL, clientId, clientSecret, redirectURI);
-const gitea = new arctic.gitea(baseURL, clientId, null, redirectURI);
+const gitea = new arctic.Gitea(baseURL, clientId, clientSecret, redirectURI);
+const gitea = new arctic.Gitea(baseURL, clientId, null, redirectURI);
 ```
 
 ### Create authorization URL
@@ -30,7 +30,7 @@ const url = await gitea.createAuthorizationURL(state, codeVerifier, scopes);
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). Gitea returns an access token, the access token expiration, and a refresh token.
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). Gitea returns an access token, the access token expiration, and a refresh token.
 
 ```ts
 import * as arctic from "antarctic";
@@ -88,7 +88,7 @@ const url = await gitea.createAuthorizationURL(state, codeVerifier, scopes);
 ```
 
 ```ts
-const response = await fetch("https://gitea.com/user", {
+const response = await fetch("https://gitea.com/api/v1/user", {
 	headers: {
 		Authorization: `Bearer ${accessToken}`
 	}

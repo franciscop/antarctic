@@ -2,28 +2,28 @@
 
 ### Classes
 
-- [`OAuth2Client`](/documentation/reference#oauth2client)
-- [`OAuth2Tokens`](/documentation/reference#oauth2tokens)
-- [`ArcticFetchError`](/documentation/reference#arcticfetcherror)
-- [`OAuth2RequestError`](/documentation/reference#oauth2requesterror)
-- [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror)
-- [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror)
-- [`OAuthConfigurationError`](/documentation/reference#oauthconfigurationerror)
-- [`InvalidOAuthCallbackError`](/documentation/reference#invalidoauthcallbackerror)
-- [`InvalidOAuthStateError`](/documentation/reference#invalidoauthstateerror)
-- [`OAuthProviderError`](/documentation/reference#oauthprovidererror)
+- [`OAuth2Client`](/reference#oauth2client)
+- [`OAuth2Tokens`](/reference#oauth2tokens)
+- [`ArcticFetchError`](/reference#arcticfetcherror)
+- [`OAuth2RequestError`](/reference#oauth2requesterror)
+- [`UnexpectedResponseError`](/reference#unexpectedresponseerror)
+- [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror)
+- [`OAuthConfigurationError`](/reference#oauthconfigurationerror)
+- [`InvalidOAuthCallbackError`](/reference#invalidoauthcallbackerror)
+- [`InvalidOAuthStateError`](/reference#invalidoauthstateerror)
+- [`OAuthProviderError`](/reference#oauthprovidererror)
 
 ### Functions
 
-- [`generateCodeVerifier()`](/documentation/reference#generatecodeverifier)
-- [`generateState()`](/documentation/reference#generatestate)
-- [`decodeIdToken()`](/documentation/reference#decodeidtoken)
+- [`generateCodeVerifier()`](/reference#generatecodeverifier)
+- [`generateState()`](/reference#generatestate)
+- [`decodeIdToken()`](/reference#decodeidtoken)
 
 ### Types
 
-- [`ProviderOptions`](/documentation/reference#provideroptions)
-- [`OAuthUser`](/documentation/reference#oauthuser)
+- [`ProviderOptions`](/reference#provideroptions)
+- [`OAuthUser`](/reference#oauthuser)
 
 ### Enums
 
-- [`CodeChallengeMethod`](/documentation/reference#codechallengemethod)
+- [`CodeChallengeMethod`](/reference#codechallengemethod)

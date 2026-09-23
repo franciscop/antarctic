@@ -2,7 +2,7 @@
 
 OAuth 2.0 provider for Linear.
 
-Also see the [OAuth 2.0](/documentation/oauth2) guide.
+Also see the [OAuth 2.0](/low-level-api#without-pkce) guide.
 
 ### Initialization
 
@@ -26,7 +26,7 @@ const url = linear.createAuthorizationURL(state, scopes);
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). Linear will return an access token with an expiration.
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). Linear will return an access token with an expiration.
 
 ```ts
 import * as arctic from "antarctic";
@@ -56,10 +56,10 @@ Use Linear's [GraphQL API](https://developers.linear.app/docs/graphql/working-wi
 
 ```ts
 const response = await fetch("https://api.linear.app/graphql", {
-    method: "POST",
-    body: `{ "query": "{ viewer { id name } }" }`,
+	method: "POST",
+	body: `{ "query": "{ viewer { id name } }" }`,
 	headers: {
-        "Content-Type": "application/json"
+		"Content-Type": "application/json",
 		Authorization: `Bearer ${accessToken}`
 	}
 });

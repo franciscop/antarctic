@@ -2,7 +2,7 @@
 
 OAuth 2.0 provider for Discord.
 
-Also see the [OAuth 2.0](/documentation/oauth2) guide for confidential clients and the [OAuth 2.0 with PKCE](/documentation/oauth2-with-pkce) guide for public clients.
+Also see the [OAuth 2.0](/low-level-api#without-pkce) guide for confidential clients and the [OAuth 2.0 with PKCE](/low-level-api#with-pkce) guide for public clients.
 
 ### Initialization
 
@@ -40,13 +40,13 @@ const url = await discord.createAuthorizationURL(state, codeVerifier, scopes);
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). Discord returns an access token, the access token expiration, and a refresh token.
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). Discord returns an access token, the access token expiration, and a refresh token.
 
 ```ts
 import * as arctic from "antarctic";
 
 try {
-	const tokens = await discord.validateAuthorizationCode(code);
+	const tokens = await discord.validateAuthorizationCode(code, null);
 	const accessToken = tokens.accessToken();
 	const accessTokenExpiresAt = tokens.accessTokenExpiresAt();
 	const refreshToken = tokens.refreshToken();
@@ -94,7 +94,7 @@ Add the `identify` scope and use the [`/users/@me` endpoint](https://discord.com
 
 ```ts
 const scopes = ["identify"];
-const url = await discord.createAuthorizationURL(state, scopes);
+const url = await discord.createAuthorizationURL(state, null, scopes);
 ```
 
 ```ts

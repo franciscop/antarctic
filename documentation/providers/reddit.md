@@ -2,14 +2,14 @@
 
 OAuth 2.0 provider for Reddit.
 
-Also see the [OAuth 2.0](/documentation/oauth2) guide.
+Also see the [OAuth 2.0](/low-level-api#without-pkce) guide.
 
 ### Initialization
 
 ```ts
 import * as arctic from "antarctic";
 
-const patreon = new arctic.Reddit(clientId, clientSecret, redirectURI);
+const reddit = new arctic.Reddit(clientId, clientSecret, redirectURI);
 ```
 
 ### Create authorization URL
@@ -24,7 +24,7 @@ const url = reddit.createAuthorizationURL(state, scopes);
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). Reddit returns an access token and its expiration.
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). Reddit returns an access token and its expiration.
 
 ```ts
 import * as arctic from "antarctic";

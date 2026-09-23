@@ -2,7 +2,7 @@
 
 Implements OAuth 2.0 with PKCE.
 
-For usage, see [OAuth 2.0 provider with PKCE](/documentation/oauth2-with-pkce).
+For usage, see [OAuth 2.0 provider with PKCE](/low-level-api#with-pkce).
 
 ### Initialization
 
@@ -26,13 +26,13 @@ const url: URL = await etsy.createAuthorizationURL(state, codeVerifier, scopes);
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). Etsy returns an access token, the access token expiration, and a refresh token.
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). Etsy returns an access token, the access token expiration, and a refresh token.
 
 ```ts
 import * as arctic from "antarctic";
 
 try {
-	const tokens: OAuth2Tokens = await etsy.validateAuthorizationCode(code, codeVerifier);
+	const tokens = await etsy.validateAuthorizationCode(code, codeVerifier);
 	const accessToken = tokens.accessToken();
 	const accessTokenExpiresAt = tokens.accessTokenExpiresAt();
 	const refreshToken = tokens.refreshToken();
@@ -60,7 +60,7 @@ const tokens = await etsy.validateAuthorizationCode(code, codeVerifier);
 const response = await fetch("https://openapi.etsy.com/v3/application/users/me", {
 	headers: {
 		"X-Api-Key": clientId,
-		Authorization: `Bearer ${tokens.accessToken}`
+		Authorization: `Bearer ${tokens.accessToken()}`
 	}
 });
 const result = await response.json();
@@ -73,7 +73,7 @@ Then use the [`getUser` endpoint](https://developer.etsy.com/documentation/refer
 const response = await fetch(`https://openapi.etsy.com/v3/application/users/${userId}`, {
 	headers: {
 		"X-Api-Key": clientId,
-		Authorization: `Bearer ${tokens.accessToken}`
+		Authorization: `Bearer ${tokens.accessToken()}`
 	}
 });
 const user = await response.json();

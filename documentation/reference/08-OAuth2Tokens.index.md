@@ -14,11 +14,11 @@ function constructor(data: object): this;
 
 ### Methods
 
-- [`accessToken()`](/documentation/reference#oauth2tokensaccesstoken)
-- [`accessTokenExpiresAt()`](/documentation/reference#oauth2tokensaccesstokenexpiresat)
-- [`accessTokenExpiresInSeconds()`](/documentation/reference#oauth2tokensaccesstokenexpiresinseconds)
-- [`hasRefreshToken()`](/documentation/reference#oauth2tokenshasrefreshtoken)
-- [`refreshToken()`](/documentation/reference#oauth2tokensrefreshtoken)
+- [`accessToken()`](/reference#oauth2tokensaccesstoken)
+- [`accessTokenExpiresAt()`](/reference#oauth2tokensaccesstokenexpiresat)
+- [`accessTokenExpiresInSeconds()`](/reference#oauth2tokensaccesstokenexpiresinseconds)
+- [`hasRefreshToken()`](/reference#oauth2tokenshasrefreshtoken)
+- [`refreshToken()`](/reference#oauth2tokensrefreshtoken)
 
 ### Properties
 

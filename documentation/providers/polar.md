@@ -1,8 +1,8 @@
 ## Polar
 
-OAuth 2.0 authorization code provider for Polar. Only supports confidential clients.
+OAuth 2.0 authorization code provider for Polar. Pass the client secret for confidential clients.
 
-Also see [OAuth 2.0 with PKCE](/documentation/oauth2-with-pkce).
+Also see [OAuth 2.0 with PKCE](/low-level-api#with-pkce).
 
 ### Initialization
 
@@ -10,6 +10,7 @@ Also see [OAuth 2.0 with PKCE](/documentation/oauth2-with-pkce).
 import * as arctic from "antarctic";
 
 const polar = new arctic.Polar(clientId, clientSecret, redirectURI);
+const polar = new arctic.Polar(clientId, null, redirectURI);
 ```
 
 ### Create authorization URL
@@ -25,7 +26,7 @@ const url = await polar.createAuthorizationURL(state, codeVerifier, scopes);
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). Polar returns an access token, its expiration, and a refresh token.
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). Polar returns an access token, its expiration, and a refresh token.
 
 ```ts
 import * as arctic from "antarctic";
@@ -51,7 +52,7 @@ try {
 
 ### OpenID Connect
 
-Use OpenID Connect with the `openid` scope to get the user's profile with an ID token or the `userinfo` endpoint. Antarctic provides [`decodeIdToken()`](/documentation/reference#decodeidtoken) for decoding the token's payload.
+Use OpenID Connect with the `openid` scope to get the user's profile with an ID token or the `userinfo` endpoint. Antarctic provides [`decodeIdToken()`](/reference#decodeidtoken) for decoding the token's payload.
 
 ```ts
 const scopes = ["openid"];
@@ -67,7 +68,7 @@ const claims = arctic.decodeIdToken(idToken);
 ```
 
 ```ts
-const response = await fetch("https://docs.polar.sh/api/v1/oauth2/userinfo", {
+const response = await fetch("https://api.polar.sh/v1/oauth2/userinfo", {
 	headers: {
 		Authorization: `Bearer ${accessToken}`
 	}

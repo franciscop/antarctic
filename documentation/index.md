@@ -31,11 +31,11 @@ const user = await github.getUser(request.url, JSON.parse(getCookie("oauth")));
 
 `getAuthorizationURL()` generates the `state` and the PKCE verifier and returns them alongside the `url`. `getUser()` checks the `state` against the one you kept, exchanges the code, fetches the profile, and returns the same shape for every provider: `{ id, name, email, image, raw, accessToken, refreshToken, scopes }`.
 
-Credentials come from the environment when you do not pass them, so the example above reads `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`. See the [high level API](/documentation/high-level-api) for the full flow, and [providers](/documentation/providers) for what each one supports.
+Credentials come from the environment when you do not pass them, so the example above reads `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`. See the [high level API](/high-level-api) for the full flow, and [providers](/providers) for what each one supports.
 
-## Lower level
+## Low-level API
 
-Arctic's low level API is available on the same objects, for when you want to drive the flow yourself. It is unchanged except that PKCE providers build the URL asynchronously, so `createAuthorizationURL()` returns a promise for them:
+Arctic's low-level API is available on the same classes, for when you want to drive the flow yourself:
 
 ```ts
 import * as arctic from "antarctic";
@@ -48,7 +48,7 @@ const tokens = await github.validateAuthorizationCode(code);
 const accessToken = tokens.accessToken();
 ```
 
-Start with the [OAuth 2.0](/documentation/oauth2) guide, or [OAuth 2.0 with PKCE](/documentation/oauth2-with-pkce) for providers that require it.
+See the [low-level API](/low-level-api) for the full flow, with and without PKCE, and the generic client for providers that are not listed.
 
 ## Scope
 

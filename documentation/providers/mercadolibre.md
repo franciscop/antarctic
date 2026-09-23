@@ -2,7 +2,7 @@
 
 OAuth 2.0 provider for Mercado Libre. This client requires PKCE to be enabled in your application settings.
 
-Also see the [OAuth 2.0 with PKCE](/documentation/oauth2-with-pkce) guide.
+Also see the [OAuth 2.0 with PKCE](/low-level-api#with-pkce) guide.
 
 ### Initialization
 
@@ -18,18 +18,19 @@ const mercadolibre = new arctic.MercadoLibre(clientId, clientSecret, redirectURI
 import * as arctic from "antarctic";
 
 const state = arctic.generateState();
-const url = await mercadolibre.createAuthorizationURL(state);
+const codeVerifier = arctic.generateCodeVerifier();
+const url = await mercadolibre.createAuthorizationURL(state, codeVerifier);
 ```
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). Mercado Libre returns an access token, its expiration, and a refresh token.
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). Mercado Libre returns an access token, its expiration, and a refresh token.
 
 ```ts
 import * as arctic from "antarctic";
 
 try {
-	const tokens = await mercadolibre.validateAuthorizationCode(code);
+	const tokens = await mercadolibre.validateAuthorizationCode(code, codeVerifier);
 	const accessToken = tokens.accessToken();
 	const accessTokenExpiresAt = tokens.accessTokenExpiresAt();
 	const refreshToken = tokens.refreshToken();
@@ -50,7 +51,7 @@ try {
 
 ### Refresh access tokens
 
-Add the `offline_access` scope to get a refresh token.
+Enable `offline_access` in your application settings to get a refresh token.
 
 ```ts
 const tokens = await mercadolibre.validateAuthorizationCode(code, codeVerifier);

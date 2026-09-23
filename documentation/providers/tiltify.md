@@ -2,7 +2,7 @@
 
 OAuth 2.0 provider for Tiltify.
 
-Also see the [OAuth 2.0](/documentation/oauth2) guide.
+Also see the [OAuth 2.0](/low-level-api#without-pkce) guide.
 
 ### Initialization
 
@@ -18,13 +18,13 @@ const tiltify = new arctic.Tiltify(clientId, clientSecret, redirectURI);
 import * as arctic from "antarctic";
 
 const state = arctic.generateState();
-const scopes = ["activity:write", "read"];
+const scopes = ["public"];
 const url = tiltify.createAuthorizationURL(state, scopes);
 ```
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). Tiltify returns an access token, the access token expiration, and a refresh token.
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). Tiltify returns an access token, the access token expiration, and a refresh token.
 
 ```ts
 import * as arctic from "antarctic";
@@ -74,7 +74,7 @@ try {
 
 ### Get user profile
 
-Use the [`/api/public/current-use` endpoint](https://developers.tiltify.com/api-reference/public#tag/user/operation/V5ApiWeb.Public.UserController.current_user) without passing any arguments.
+Use the [`/api/public/current-user` endpoint](https://developers.tiltify.com/api-reference/public#tag/user/operation/V5ApiWeb.Public.UserController.current_user) without passing any arguments.
 
 ```ts
 const response = await fetch("https://v5api.tiltify.com/api/public/current-user", {

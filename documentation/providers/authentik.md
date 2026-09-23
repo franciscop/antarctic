@@ -2,7 +2,7 @@
 
 OAuth 2.0 provider for Authentik.
 
-Also see the [OAuth 2.0 with PKCE](/documentation/oauth2-with-pkce) guide.
+Also see the [OAuth 2.0 with PKCE](/low-level-api#with-pkce) guide.
 
 ### Initialization
 
@@ -29,7 +29,7 @@ const url = await authentik.createAuthorizationURL(state, codeVerifier, scopes);
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). Actual values returned by Authentik depends on your configuration and version.
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). Actual values returned by Authentik depends on your configuration and version.
 
 ```ts
 import * as arctic from "antarctic";
@@ -56,7 +56,7 @@ try {
 
 ### OpenID Connect
 
-Use OpenID Connect with the `openid` scope to get the user's profile with an ID token or the `userinfo` endpoint. Antarctic provides [`decodeIdToken()`](/documentation/reference#decodeidtoken) for decoding the token's payload.
+Use OpenID Connect with the `openid` scope to get the user's profile with an ID token or the `userinfo` endpoint. Antarctic provides [`decodeIdToken()`](/reference#decodeidtoken) for decoding the token's payload.
 
 ```ts
 const scopes = ["openid"];

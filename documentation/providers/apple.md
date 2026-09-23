@@ -2,7 +2,7 @@
 
 OAuth 2.0 provider for Apple.
 
-Also see the [OAuth 2.0](/documentation/oauth2) guide.
+Also see the [OAuth 2.0](/low-level-api#without-pkce) guide.
 
 ### Initialization
 
@@ -66,9 +66,9 @@ Since this is a cross-origin form request, make sure to relax your CSRF protecti
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). The ID token will always be returned regardless of the scope. T access token and refresh token currently does not have any uses.
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). The ID token will always be returned regardless of the scope. The access token and refresh token have no uses.
 
-Antarctic provides [`decodeIdToken()`](/documentation/reference#decodeidtoken) for decoding the ID token's payload.
+Antarctic provides [`decodeIdToken()`](/reference#decodeidtoken) for decoding the ID token's payload.
 
 ```ts
 import * as arctic from "antarctic";

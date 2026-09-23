@@ -22,11 +22,11 @@ function constructor(
 
 ### Methods
 
-- [`createAuthorizationURL()`](/documentation/reference#oauth2clientcreateauthorizationurl)
-- [`createAuthorizationURLWithPKCE()`](/documentation/reference#oauth2clientcreateauthorizationurlwithpkce)
-- [`refreshAccessToken()`](/documentation/reference#oauth2clientrefreshaccesstoken)
-- [`revokeToken()`](/documentation/reference#oauth2clientrevoketoken)
-- [`validateAuthorizationCode()`](/documentation/reference#oauth2clientvalidateauthorizationcode)
+- [`createAuthorizationURL()`](/reference#oauth2clientcreateauthorizationurl)
+- [`createAuthorizationURLWithPKCE()`](/reference#oauth2clientcreateauthorizationurlwithpkce)
+- [`refreshAccessToken()`](/reference#oauth2clientrefreshaccesstoken)
+- [`revokeToken()`](/reference#oauth2clientrevoketoken)
+- [`validateAuthorizationCode()`](/reference#oauth2clientvalidateauthorizationcode)
 
 ### Properties
 

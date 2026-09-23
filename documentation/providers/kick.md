@@ -2,7 +2,7 @@
 
 OAuth 2.0 provider for Kick.
 
-Also see the [OAuth 2.0 with PKCE](/documentation/oauth2-with-pkce) guide.
+Also see the [OAuth 2.0 with PKCE](/low-level-api#with-pkce) guide.
 
 ### Initialization
 
@@ -25,7 +25,7 @@ const url = await kick.createAuthorizationURL(state, codeVerifier, scopes);
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). Kick returns an access token, the access token expiration, and a refresh token.
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). Kick returns an access token, the access token expiration, and a refresh token.
 
 ```ts
 import * as arctic from "antarctic";
@@ -72,7 +72,7 @@ try {
 }
 ```
 
-#### Get user profile
+### Get user profile
 
 Add the `user:read` scope when creating the authorization URL.
 

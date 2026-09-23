@@ -2,7 +2,7 @@
 
 OAuth 2.0 provider for Yandex.
 
-Also see the [OAuth 2.0](/documentation/oauth2) guide.
+Also see the [OAuth 2.0](/low-level-api#without-pkce) guide.
 
 ### Initialization
 
@@ -18,13 +18,13 @@ const yandex = new arctic.Yandex(clientId, clientSecret, redirectURI);
 import * as arctic from "antarctic";
 
 const state = arctic.generateState();
-const scopes = ["activity:write", "read"];
+const scopes = ["login:info", "login:email"];
 const url = yandex.createAuthorizationURL(state, scopes);
 ```
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). Yandex returns an access token, the access token expiration, and a refresh token.
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). Yandex returns an access token, the access token expiration, and a refresh token.
 
 ```ts
 import * as arctic from "antarctic";
@@ -74,13 +74,12 @@ try {
 
 ### Get user profile
 
-Use the [`/myself` endpoint](https://yandex.cloud/en/docs/tracker/get-user-info?utm_referrer=https%3A%2F%2Fwww.google.com%2F).
+Use the [`/info` endpoint](https://yandex.com/dev/id/doc/en/user-information).
 
 ```ts
-const response = await fetch("https://api.tracker.yandex.net/v2/myself", {
+const response = await fetch("https://login.yandex.ru/info?format=json", {
 	headers: {
-		Authorization: `OAuth ${accessToken}`,
-		"X-Org-ID": ORGANIZATION_ID
+		Authorization: `OAuth ${accessToken}`
 	}
 });
 const user = await response.json();

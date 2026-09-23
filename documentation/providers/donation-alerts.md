@@ -2,7 +2,7 @@
 
 OAuth 2.0 provider for DonationAlerts.
 
-Also see the [OAuth 2.0](/documentation/oauth2) guide.
+Also see the [OAuth 2.0](/low-level-api#without-pkce) guide.
 
 ### Initialization
 
@@ -19,12 +19,13 @@ import * as arctic from "antarctic";
 
 const state = arctic.generateState();
 const scopes = ["oauth-user-show"];
-const url = donationAlerts.createAuthorizationURL(state, scopes);
+const url = donationAlerts.createAuthorizationURL(scopes);
+url.searchParams.set("state", state);
 ```
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). DonationAlerts returns an access token, the access token expiration, and a refresh token.
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). DonationAlerts returns an access token, the access token expiration, and a refresh token.
 
 ```ts
 import * as arctic from "antarctic";
@@ -78,7 +79,8 @@ Add the `oauth-user-show` scope and use the [`/user/oauth`](https://www.donation
 
 ```ts
 const scopes = ["oauth-user-show"];
-const url = donationAlerts.createAuthorizationURL(state, scopes);
+const url = donationAlerts.createAuthorizationURL(scopes);
+url.searchParams.set("state", state);
 ```
 
 ```ts

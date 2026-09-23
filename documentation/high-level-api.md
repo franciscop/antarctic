@@ -1,6 +1,6 @@
 # High-level API
 
-Every provider exposes two methods that cover the whole authorization code flow: `getAuthorizationURL()` and `getUser()`. They generate and validate `state`, handle PKCE where the provider supports it, exchange the code, and return a normalized user.
+Every provider except Synology exposes two methods that cover the whole authorization code flow: `getAuthorizationURL()` and `getUser()`. They generate and validate `state`, handle PKCE where the provider supports it, exchange the code, and return a normalized user.
 
 They require the options form of the constructor. Every option can come from the environment, so the object itself is optional:
 
@@ -30,7 +30,7 @@ setCookie("oauth", JSON.stringify({ state, payload }), {
 return Response.redirect(url);
 ```
 
-`state` is the CSRF token and `payload` carries the PKCE verifier, empty for providers without PKCE. Keep both until the callback. The cookie's `maxAge` is how long the user has to finish signing in.
+`state` is the CSRF token and `payload` carries whatever the callback needs, such as the PKCE verifier. Keep both as they are until the callback. The cookie's `maxAge` is how long the user has to finish signing in.
 
 It takes an optional scope list, covered in [Scopes](#scopes).
 
@@ -119,31 +119,32 @@ A variable set to an empty string counts as unset. The environment is read once,
 
 ## Scopes
 
-`GITHUB_SCOPES` and its equivalents take a list separated by commas, whitespace, or both:
+Scopes are set per provider and can be overridden per login. From highest to lowest priority:
+
+1. The argument to `getAuthorizationURL(scopes)`, for that login only.
+2. The `scopes` option, for every login with that provider.
+3. The `GITHUB_SCOPES` variable and its equivalents.
+4. The provider default, the minimal set that yields a full profile.
+
+```ts
+const github = new auth.GitHub({ scopes: ["read:user", "user:email"] });
+
+await github.getAuthorizationURL(); // read:user user:email
+await github.getAuthorizationURL(["read:user", "user:email", "repo"]); // this login only
+```
+
+Most applications leave scopes unset, and pass an argument only for the logins that need more access, such as connecting a user's repositories. An argument replaces the list instead of adding to it, so repeat the scopes you still need. An empty array requests no scopes at all, and beats the environment like any other explicit value.
+
+The variable takes a list separated by commas, whitespace, or both:
 
 ```
 GITHUB_SCOPES=read:user,user:email
 GITHUB_SCOPES="read:user user:email"
 ```
 
-Scopes resolve as `argument > constructor > environment > provider default`:
+The scopes the provider actually granted come back in `user.scopes`, or `null` when the provider does not report them.
 
-```ts
-const github = new auth.GitHub({ scopes: ["read:user"] });
-
-await github.getAuthorizationURL(); // read:user
-await github.getAuthorizationURL(["repo"]); // repo
-```
-
-The provider default is the minimal set that yields a full profile, so most applications can leave scopes unset and let the environment override them per deployment.
-
-An empty array requests no scopes at all, and beats the environment like any other explicit value. Build the array deliberately if you compute it:
-
-```ts
-new auth.GitHub({ scopes: [] }); // the authorization URL has no scope parameter
-```
-
-Some providers take their scopes from their app settings rather than the authorization URL, and ignore both the option and the variable: AniList, Bitbucket, MercadoLibre, MercadoPago, MyAnimeList, Naver, Notion, Shikimori, and WorkOS.
+AniList, Bitbucket, MercadoLibre, MercadoPago, MyAnimeList, Naver, Notion, Shikimori, and WorkOS take their scopes from the app settings rather than the authorization URL, and ignore all of the above.
 
 ## Errors
 
@@ -156,16 +157,4 @@ Secrets, tokens, and PKCE verifiers are never included in error messages.
 
 ## Low-level API
 
-The positional constructors and the underlying methods remain on the same object. PKCE providers build the URL asynchronously, so their `createAuthorizationURL()` returns a promise:
-
-```ts
-import * as arctic from "antarctic";
-
-const github = new arctic.GitHub(clientId, clientSecret, redirectURI);
-
-const state = arctic.generateState();
-const url = github.createAuthorizationURL(state, ["user:email"]);
-const tokens = await github.validateAuthorizationCode(code);
-```
-
-Both constructors build the same class, so you can mix the two APIs. `getAuthorizationURL()` and `getUser()` throw `OAuthConfigurationError` unless the instance was created with the options form.
+Both constructors build the same class, so the [low-level API](/low-level-api) is always available alongside these methods. `getAuthorizationURL()` and `getUser()` throw `OAuthConfigurationError` unless the instance was created with the options form.

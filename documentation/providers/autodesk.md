@@ -2,7 +2,7 @@
 
 OAuth 2.0 provider for [Autodesk Platform Services](https://aps.autodesk.com/en/docs/oauth/v2/developers_guide/overview/).
 
-Also see the [OAuth 2.0 with PKCE](/documentation/oauth2-with-pkce) guide.
+Also see the [OAuth 2.0 with PKCE](/low-level-api#with-pkce) guide.
 
 ### Initialization
 
@@ -30,7 +30,7 @@ The list of scopes Autodesk Platform Services supports can be found at the [Deve
 
 ### Validate authorization code
 
-`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/documentation/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/documentation/reference#oauth2requesterror), [`ArcticFetchError`](/documentation/reference#arcticfetcherror), [`UnexpectedResponseError`](/documentation/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/documentation/reference#unexpectederrorresponsebodyerror). Autodesk Platform Services returns an access token, the access token expiration, and a refresh token.
+`validateAuthorizationCode()` will either return an [`OAuth2Tokens`](/reference#oauth2tokens), or throw one of [`OAuth2RequestError`](/reference#oauth2requesterror), [`ArcticFetchError`](/reference#arcticfetcherror), [`UnexpectedResponseError`](/reference#unexpectedresponseerror), or [`UnexpectedErrorResponseBodyError`](/reference#unexpectederrorresponsebodyerror). Autodesk Platform Services returns an access token, the access token expiration, and a refresh token.
 
 ```ts
 import * as arctic from "antarctic";
@@ -63,8 +63,7 @@ Use `refreshAccessToken()` to get a new access token using a refresh token. Auto
 import * as arctic from "antarctic";
 
 try {
-	// Pass an empty `scopes` array to keep using the same scopes.
-	const tokens = await autodesk.refreshAccessToken(refreshToken, scopes);
+	const tokens = await autodesk.refreshAccessToken(refreshToken);
 	const accessToken = tokens.accessToken();
 	const accessTokenExpiresAt = tokens.accessTokenExpiresAt();
 } catch (e) {
@@ -80,11 +79,11 @@ try {
 
 ### Revoke tokens
 
-Use `revokeToken()` to revoke a token. You need to specify wether the token is an `access_token` or a `refresh_token`. This can throw the same errors as `validateAuthorizationCode()`.
+Use `revokeToken()` to revoke a token. This can throw the same errors as `validateAuthorizationCode()`.
 
 ```ts
 try {
-	await autodesk.revokeToken(token, token_type);
+	await autodesk.revokeToken(token);
 } catch (e) {
 	if (e instanceof arctic.OAuth2RequestError) {
 		// Invalid authorization code, credentials, or redirect URI
@@ -98,7 +97,7 @@ try {
 
 ### OpenID Connect
 
-Use OpenID Connect with the `openid` scope to get the user's profile with an ID token or the [`userinfo` endpoint](https://aps.autodesk.com/en/docs/profile/v1/reference/profile/oidcuserinfo/). Antarctic provides [`decodeIdToken()`](/documentation/reference#decodeidtoken) for decoding the token's payload.
+Use OpenID Connect with the `openid` scope to get the user's profile with an ID token or the [`userinfo` endpoint](https://aps.autodesk.com/en/docs/profile/v1/reference/profile/oidcuserinfo/). Antarctic provides [`decodeIdToken()`](/reference#decodeidtoken) for decoding the token's payload.
 
 See the endpoint documentation for the token claims.
 
