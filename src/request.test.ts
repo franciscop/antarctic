@@ -1,4 +1,4 @@
-import * as vitest from "vitest";
+import * as vitest from "bun:test";
 
 import { joinURIAndPath } from "./request.js";
 

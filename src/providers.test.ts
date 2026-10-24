@@ -1,4 +1,4 @@
-import * as vitest from "vitest";
+import * as vitest from "bun:test";
 
 import * as arctic from "./index.js";
 import { OAuthConfigurationError } from "./auth.js";
@@ -103,7 +103,7 @@ vitest.test("Google.getUser() uses PKCE and the ID token", async () => {
 			scope: "openid profile email"
 		});
 	});
-	vitest.vi.stubGlobal("fetch", fetchMock);
+	const fetchSpy = vitest.spyOn(globalThis, "fetch").mockImplementation(fetchMock);
 	try {
 		const user = await google.getUser({ code: "abc", state }, { state, payload });
 		vitest.expect(user).toStrictEqual({
@@ -120,7 +120,7 @@ vitest.test("Google.getUser() uses PKCE and the ID token", async () => {
 		vitest.expect(user.raw?.hd).toBe("example.com");
 		vitest.expect(sentBody).toContain(`code_verifier=${payload.codeVerifier}`);
 	} finally {
-		vitest.vi.unstubAllGlobals();
+		fetchSpy.mockRestore();
 	}
 });
 

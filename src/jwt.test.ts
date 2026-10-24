@@ -1,4 +1,4 @@
-import * as vitest from "vitest";
+import * as vitest from "bun:test";
 
 import { createJWTSignatureMessage, decodeJWT, encodeJWT } from "./jwt.js";
 

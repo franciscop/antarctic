@@ -1,4 +1,4 @@
-import * as vitest from "vitest";
+import * as vitest from "bun:test";
 
 import {
 	InvalidOAuthCallbackError,
@@ -127,7 +127,7 @@ vitest.test("GitHub.getUser()", async () => {
 		}
 		throw new Error(`Unexpected request: ${requestURL}`);
 	});
-	vitest.vi.stubGlobal("fetch", fetchMock);
+	const fetchSpy = vitest.spyOn(globalThis, "fetch").mockImplementation(fetchMock);
 	try {
 		const user = await github.getUser(`?code=abc&state=${state}`, { state, payload });
 		vitest.expect(user).toStrictEqual({
@@ -175,6 +175,6 @@ vitest.test("GitHub.getUser()", async () => {
 			)
 			.rejects.toThrow(InvalidOAuthStateError);
 	} finally {
-		vitest.vi.unstubAllGlobals();
+		fetchSpy.mockRestore();
 	}
 });
