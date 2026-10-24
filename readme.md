@@ -1,4 +1,4 @@
-# Antarctic
+# Antarctic [![npm install antarctic](https://img.shields.io/badge/npm%20install-antarctic-blue.svg)](https://www.npmjs.com/package/antarctic) [![tests](https://github.com/franciscop/antarctic/workflows/tests/badge.svg)](https://github.com/franciscop/antarctic/actions) [![deps](https://img.shields.io/badge/deps-0-limegreen.svg)](https://github.com/franciscop/antarctic/blob/master/package.json)
 
 Antarctic is a fork of [Arctic](https://arcticjs.dev) by [pilcrowOnPaper](https://github.com/pilcrowOnPaper), adding a high level auth layer on top of its OAuth 2.0 clients. Only the authorization code flow is supported. Built on top of the Fetch API, it's light weight, fully-typed, and runtime-agnostic.
 
