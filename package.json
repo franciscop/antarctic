@@ -15,16 +15,13 @@
 	"files": [
 		"/dist/"
 	],
-	"author": "Francisco Presencia",
+	"author": "Francisco Presencia <public@francisco.io> (https://francisco.io/)",
 	"contributors": [
 		"pilcrowOnPaper (author of Arctic, which Antarctic is a fork of)"
 	],
 	"license": "MIT",
 	"homepage": "https://antarcticjs.dev",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/franciscop/antarctic.git"
-	},
+	"repository": "github:franciscop/antarctic",
 	"devDependencies": {
 		"@types/node": "^20.8.6",
 		"@typescript-eslint/eslint-plugin": "^6.7.5",
@@ -34,5 +31,14 @@
 		"prettier": "^3.0.3",
 		"typescript": "^5.2.2",
 		"vitest": "1.6.0"
-	}
+	},
+	"funding": "https://www.paypal.me/franciscopresencia/19",
+	"keywords": [
+		"oauth",
+		"oauth2",
+		"oidc",
+		"auth",
+		"authentication",
+		"login"
+	]
 }
